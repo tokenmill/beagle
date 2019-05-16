@@ -1,0 +1,5 @@
+[{"text": "test text",
+  "id": "test-id",
+  "case-sensitive?": true,
+  "ascii-fold?": true,
+  "meta": {"email": "test@example.com"}}]
