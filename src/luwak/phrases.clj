@@ -9,7 +9,8 @@
            (uk.co.flax.luwak.presearcher MatchAllPresearcher)
            (uk.co.flax.luwak.matchers HighlightingMatcher HighlightsMatch HighlightsMatch$Hit)
            (org.apache.lucene.queryparser.complexPhrase ComplexPhraseQueryParser)
-           (org.apache.lucene.analysis.core WhitespaceTokenizer LowerCaseFilter WhitespaceAnalyzer)
+           (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer)
+           (org.apache.lucene.analysis.standard StandardFilter StandardTokenizer)
            (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (java.util UUID)))
@@ -21,40 +22,48 @@
 
 (def default-conf {:case-sensitive? true :ascii-fold? false})
 
-(def analyzers
-  {#{}                       {:analyzer   (WhitespaceAnalyzer.)
-                              :field-name "text"}
-   #{:lowercase}             {:analyzer   (proxy [Analyzer] []
-                                            (createComponents [^String field-name]
-                                              (let [^Tokenizer tokenizer (WhitespaceTokenizer.)]
-                                                (Analyzer$TokenStreamComponents.
-                                                  tokenizer (LowerCaseFilter. tokenizer)))))
-                              :field-name "text.lowercased"}
-   #{:ascii-fold}            {:analyzer   (proxy [Analyzer] []
-                                            (createComponents [^String field-name]
-                                              (let [^Tokenizer tokenizer (WhitespaceTokenizer.)]
-                                                (Analyzer$TokenStreamComponents.
-                                                  tokenizer (ASCIIFoldingFilter. tokenizer)))))
-                              :field-name "text.ascii-folded"}
-   #{:lowercase :ascii-fold} {:analyzer   (proxy [Analyzer] []
-                                            (createComponents [^String field-name]
-                                              (let [^Tokenizer tokenizer (WhitespaceTokenizer.)]
-                                                (Analyzer$TokenStreamComponents.
-                                                  tokenizer (ASCIIFoldingFilter. (LowerCaseFilter. tokenizer))))))
-                              :field-name "text.ascii-folded-lowercased"}})
+(defn kw->tokenizer [kw]
+  (case kw
+    :standard (StandardTokenizer.)
+    :whitespace (WhitespaceTokenizer.)
+    (StandardTokenizer.)))
+
+(defn analyzers [conf tokenizer]
+  (let [^Tokenizer tokenizer (kw->tokenizer tokenizer)]
+    (case conf
+      #{} {:analyzer   (proxy [Analyzer] []
+                         (createComponents [^String field-name]
+                           (Analyzer$TokenStreamComponents.
+                             tokenizer (StandardFilter. tokenizer))))
+           :field-name "text"}
+      #{:lowercase} {:analyzer   (proxy [Analyzer] []
+                                   (createComponents [^String field-name]
+                                     (Analyzer$TokenStreamComponents.
+                                       tokenizer (LowerCaseFilter. tokenizer))))
+                     :field-name "text.lowercased"}
+      #{:ascii-fold} {:analyzer   (proxy [Analyzer] []
+                                    (createComponents [^String field-name]
+                                      (Analyzer$TokenStreamComponents.
+                                        tokenizer (ASCIIFoldingFilter. tokenizer))))
+                      :field-name "text.ascii-folded"}
+      #{:lowercase :ascii-fold} {:analyzer   (proxy [Analyzer] []
+                                               (createComponents [^String field-name]
+                                                 (Analyzer$TokenStreamComponents.
+                                                   tokenizer (ASCIIFoldingFilter. (LowerCaseFilter. tokenizer)))))
+                                 :field-name "text.ascii-folded-lowercased"})))
 
 (defn conf->analyzers [{:keys [ascii-fold? case-sensitive?]
-                        :or {ascii-fold? (:ascii-fold? default-conf)
-                             case-sensitive? (:case-sensitive? default-conf)}}]
+                        :or   {ascii-fold?     (:ascii-fold? default-conf)
+                               case-sensitive? (:case-sensitive? default-conf)}}]
   (cond-> #{}
           (false? case-sensitive?) (conj :lowercase)
           (true? ascii-fold?) (conj :ascii-fold)))
 
-(defn get-string-analyzer [analysis-conf]
-  (get-in analyzers [(conf->analyzers analysis-conf) :analyzer]))
+(defn get-string-analyzer [analysis-conf tokenizer]
+  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer) [:analyzer]))
 
-(defn get-field-name [analysis-conf]
-  (get-in analyzers [(conf->analyzers analysis-conf) :field-name]))
+(defn get-field-name [analysis-conf tokenizer]
+  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer) [:field-name]))
 
 (defn group-into-phrases [matches]
   (remove empty?
@@ -68,24 +77,24 @@
                 (recur (conj current-phrase token) phrases token tokens)
                 (recur [token] (conj phrases current-phrase) token tokens))))))
 
-(defn ^InputDocument input-document [^String text]
+(defn ^InputDocument input-document [^String text tokenizer]
   (-> (InputDocument/builder "doc1")
-      (.addField (get-field-name keyword-analysis-conf)
+      (.addField (get-field-name keyword-analysis-conf tokenizer)
                  text
-                 (get-string-analyzer keyword-analysis-conf))
-      (.addField (get-field-name lowercase-analysis-conf)
+                 (get-string-analyzer keyword-analysis-conf tokenizer))
+      (.addField (get-field-name lowercase-analysis-conf tokenizer)
                  text
-                 (get-string-analyzer lowercase-analysis-conf))
-      (.addField (get-field-name ascii-folding-analysis-conf)
+                 (get-string-analyzer lowercase-analysis-conf tokenizer))
+      (.addField (get-field-name ascii-folding-analysis-conf tokenizer)
                  text
-                 (get-string-analyzer ascii-folding-analysis-conf))
-      (.addField (get-field-name lowercase-ascii-fold-analysis-conf)
+                 (get-string-analyzer ascii-folding-analysis-conf tokenizer))
+      (.addField (get-field-name lowercase-ascii-fold-analysis-conf tokenizer)
                  text
-                 (get-string-analyzer lowercase-ascii-fold-analysis-conf))
+                 (get-string-analyzer lowercase-ascii-fold-analysis-conf tokenizer))
       (.build)))
 
-(defn matches [text ^Monitor monitor]
-  (-> (.match monitor (input-document text) HighlightingMatcher/FACTORY)
+(defn matches [text ^Monitor monitor tokenizer]
+  (-> (.match monitor (input-document text tokenizer) HighlightingMatcher/FACTORY)
       (.getMatches "doc1")
       (.getMatches)))
 
@@ -110,8 +119,8 @@
                  :begin-offset  startOffset
                  :end-offset    endOffset})))))
 
-(defn mark-text [^String text ^Monitor monitor ^String type-name]
-  (->> (matches text monitor)
+(defn mark-text [^String text ^Monitor monitor ^String type-name tokenizer]
+  (->> (matches text monitor tokenizer)
        (map #(match->annotation text monitor type-name %))
        (flatten)))
 
@@ -158,23 +167,23 @@
 (defn prepare-monitor [monitor dict-entries]
   (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries)))
 
-(defn create-monitor [analysis-conf]
+(defn create-monitor [analysis-conf tokenizer]
   (Monitor.
     (proxy [MonitorQueryParser] []
       (parse [queryString metadata]
         (.parse (ComplexPhraseQueryParser.
-                  (get-field-name analysis-conf)
-                  (get-string-analyzer analysis-conf)) queryString)))
+                  (get-field-name analysis-conf tokenizer)
+                  (get-string-analyzer analysis-conf tokenizer)) queryString)))
     (MatchAllPresearcher.)))
 
 (defn get-dictionary-entries [groups analysis-conf]
   (get groups (conf->analyzers analysis-conf)))
 
-(defn setup-monitors [dictionary]
-  (let [^Monitor kw-monitor (create-monitor keyword-analysis-conf)
-        ^Monitor lowercased-monitor (create-monitor lowercase-analysis-conf)
-        ^Monitor ascii-folded-monitor (create-monitor ascii-folding-analysis-conf)
-        ^Monitor lowercased-ascii-folded-monitor (create-monitor lowercase-ascii-fold-analysis-conf)
+(defn setup-monitors [dictionary tokenizer]
+  (let [^Monitor kw-monitor (create-monitor keyword-analysis-conf tokenizer)
+        ^Monitor lowercased-monitor (create-monitor lowercase-analysis-conf tokenizer)
+        ^Monitor ascii-folded-monitor (create-monitor ascii-folding-analysis-conf tokenizer)
+        ^Monitor lowercased-ascii-folded-monitor (create-monitor lowercase-ascii-fold-analysis-conf tokenizer)
 
         groups (group-by conf->analyzers dictionary)
 
@@ -195,16 +204,16 @@
           (synonym-annotation? annotation) (assoc :dict-entry-id (get-in annotation [:meta "query-id"]))
           (meta-type? annotation) (update-in [:meta] dissoc "_type")))
 
-(defn annotator [dictionary & {:keys [type-name optimize-dictionary? validate-dictionary?]}]
+(defn annotator [dictionary & {:keys [type-name optimize-dictionary? validate-dictionary? tokenizer]}]
   (when validate-dictionary? (sch/validate schema/Dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        monitors (setup-monitors dictionary)]
+        monitors (setup-monitors dictionary tokenizer)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
         (let [annotations (map post-process
-                               (flatten (pmap (fn [monitor] (mark-text text monitor type-name)) monitors)))]
+                               (flatten (pmap (fn [monitor] (mark-text text monitor type-name tokenizer)) monitors)))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))

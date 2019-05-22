@@ -148,3 +148,23 @@
           anns (annotator "before annotated schon after annotated")]
       (is (not (empty? anns)))
       (is (= "schon" (-> anns first :text))))))
+
+(deftest phrase-end-sentence
+  (let [dictionary [{:text "test-test"}]
+        annotator (phrases/annotator dictionary)
+        anns (annotator "before annotated test-test.")]
+    (is (not (empty? anns)))
+    (is (= "test-test" (:text (first anns))))))
+
+(deftest phrase-in-quotes
+  (let [dictionary [{:text "test-test" :case-sensitive? false}]
+        annotator (phrases/annotator dictionary)
+        anns (annotator "before annotated \"TEST-test\".")]
+    (is (not (empty? anns)))
+    (is (= "TEST-test" (:text (first anns))))))
+
+(deftest phrase-in-quotes-should-not-match
+  (let [dictionary [{:text "test-test" :case-sensitive? false}]
+        annotator (phrases/annotator dictionary :tokenizer :whitespace)
+        anns (annotator "before annotated \"TEST-test\".")]
+    (is (empty? anns))))
