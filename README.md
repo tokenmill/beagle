@@ -11,23 +11,29 @@
 ## Phrase annotator usage
 
 ```clojure
+(require '[luwak.phrases :as phrases])
+
 (let [dictionary [{:text "to be annotated" :id "1"}]
-      annotator (phrases/annotator dictionary "LABEL")]
+      annotator (phrases/annotator dictionary :type-name "LABEL")]
   (annotator "before annotated to be annotated after annotated"))
-;=> ({:Text "to be annotated", :Type "LABEL", :DictEntryId "1", :Meta {}, :BeginOffset 17, :EndOffset 32})
+=> ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
 
 (let [dictionary [{:text "TO BE ANNOTATED" :id "1" :case-sensitive? false}]
-      annotator (phrases/annotator dictionary "LABEL")]
+      annotator (phrases/annotator dictionary :type-name "LABEL")]
   (annotator "before annotated to be annotated after annotated"))
-;=> ({:Text "to be annotated", :Type "LABEL", :DictEntryId "1", :Meta {}, :BeginOffset 17, :EndOffset 32})
+=> ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
 
 (let [dictionary [{:text "TÖ BE ÄNNÖTÄTED" :id "1" :case-sensitive? false :ascii-fold? true}]
-      annotator (phrases/annotator dictionary "LABEL")]
+      annotator (phrases/annotator dictionary :type-name "LABEL")]
   (annotator "before annotated to be annotated after annotated"))
-;=> ({:Text "to be annotated", :Type "LABEL", :DictEntryId "1", :Meta {}, :BeginOffset 17, :EndOffset 32})
+=> ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
 ```
 
-## CSV dictionary format
+## Dictionary readers
+
+Three file formats are supported: csv, edn, json.
+
+### CSV dictionary format
 
 Separator: ","
 Escape: "\""
@@ -43,7 +49,7 @@ Under `meta`, there should be a list of strings separated by ";". Even number of
 
 ## Validator
 
-Accepts any number of dictionaries to validate as long as they are provided in pairs as '"path/to/dicionary/file" "file-type"'
+Accepts any number of dictionaries to validate as long as they are provided in pairs as '"/path/to/dictionary/file" "file-type"'
 
 ### Supported file types
 
@@ -79,4 +85,64 @@ validate-dictionary:
     - /opt/validate your-dict.csv csv
     - /opt/validate your-dict.json json
     - /opt/validate your-dict.edn edn
+```
+
+## Dictionary optimizer
+
+Supported optimizations:
+- Remove duplicate dictionary entries
+- Merge synonyms
+- Synonyms and text equality check
+
+There are cases when dictionary entries can't be merged:
+- Differences in text analysis
+
+Examples:
+```clojure
+(require '[luwak.dictionary-optimizer :as optimizer])
+
+; Remove duplicates
+(let [dictionary [{:text "TO BE ANNOTATED" :id "1"}
+                  {:text "TO BE ANNOTATED"}]]
+  (optimizer/optimize dictionary))
+=> ({:text "TO BE ANNOTATED", :id "1"})
+
+; Merge synonyms
+(let [dictionary [{:text "TO BE ANNOTATED" :synonyms ["ONE"]}
+                  {:text "TO BE ANNOTATED" :synonyms ["TWO"]}]]
+  (optimizer/optimize dictionary))
+=> ({:text "TO BE ANNOTATED", :synonyms ("TWO" "ONE")})
+
+; Synonyms and text equality check
+(let [dictionary [{:text "TO BE ANNOTATED" :synonyms ["TO BE ANNOTATED"]}]]
+  (optimizer/optimize dictionary))
+=> ({:text "TO BE ANNOTATED", :synonyms ["TO BE ANNOTATED"]})
+
+; Can't be merged because of differences in text analysis
+(let [dictionary [{:text "TO BE ANNOTATED" :case-sensitive? true}
+                  {:text "TO BE ANNOTATED" :case-sensitive? false}]]
+  (optimizer/optimize dictionary))
+=> ({:text "TO BE ANNOTATED", :case-sensitive? true} {:text "TO BE ANNOTATED", :case-sensitive? false})
+```
+
+## Annotation merger
+
+Only annotations of the same type are merged.
+
+Handled cases:
+- Duplicate annotations
+- Nested annotations
+
+Examples:
+```clojure
+(require '[luwak.annotation-merger :as merger])
+
+(let [dictionary [{:text "TEST"}
+                  {:text "This TEST is"}]
+      annotator (phrases/annotator dictionary)
+      annotations (annotator "This TEST is")]
+  (println "Annotations: " annotations)
+  (merger/merge-same-type-annotations annotations))
+Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
+=> ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
 ```
