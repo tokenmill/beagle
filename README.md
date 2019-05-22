@@ -76,15 +76,18 @@ clj -m luwak.validator "your-dict.csv" "csv" "your-other-dict.json" "json"
 #### Docker
 
 Example in Gitlab CI:
+
 ```
-validate-dictionary:
+validate-dictionaries:
   stage: dictionary-validation
-  when: manual
-  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator
+  when: always
+  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
   script:
-    - /opt/validate your-dict.csv csv
-    - /opt/validate your-dict.json json
-    - /opt/validate your-dict.edn edn
+    - >
+      dictionary-validator
+      /path/to/dict.csv csv
+      /path/to/dict.json json
+      /path/to/dict.edn edn
 ```
 
 ## Dictionary optimizer

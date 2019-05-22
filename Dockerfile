@@ -22,7 +22,6 @@ RUN chmod 755 dictionary-validator
 FROM alpine:3.9.4 as validator
 
 WORKDIR /opt
-COPY --from=builder /usr/src/app/dictionary-validator /opt/validate
+COPY --from=builder /usr/src/app/dictionary-validator /usr/local/bin/dictionary-validator
 
-ENV PATH=".:${PATH}"
-CMD ["validate"]
+CMD ["dictionary-validator"]
