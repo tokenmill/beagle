@@ -92,6 +92,6 @@
   (let [dictionary [{:text "test" :id "1" :synonyms ["luwak" "luwak1"]}]
         monitor-queries (annotations/dict-entries->monitor-queries dictionary)]
     (is (= 3 (count monitor-queries)))
-    (let [annotator (annotations/annotator dictionary "TEST")
+    (let [annotator (annotations/annotator dictionary :type-name "TEST")
           anns (annotator "this is a luwak text test luwak1")]
       (is (= 3 (count anns))))))

@@ -195,9 +195,10 @@
           (synonym-annotation? annotation) (assoc :dict-entry-id (get-in annotation [:meta "query-id"]))
           (meta-type? annotation) (update-in [:meta] dissoc "_type")))
 
-(defn annotator [dictionary type-name & {:keys [optimize-dictionary? validate-dictionary?]}]
+(defn annotator [dictionary & {:keys [type-name optimize-dictionary? validate-dictionary?]}]
   (when validate-dictionary? (sch/validate schema/Dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
+        type-name (if (s/blank? type-name) "PHRASE" type-name)
         monitors (setup-monitors dictionary)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
