@@ -1,13 +1,13 @@
 stages:
-  - dictionary-validator-deploy
+  - dictionary-validator-publish
   - test
 
 variables:
   DOCKER_DRIVER: overlay2
   DOCKER_HOST: tcp://docker:2375/
 
-deploy-validator:
-  stage: dictionary-validator-deploy
+publish-dictionary-validator-docker:
+  stage: dictionary-validator-publish
   image: docker:stable
   only:
     changes:
@@ -18,9 +18,9 @@ deploy-validator:
   before_script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
   script:
-    - docker build --target validator -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:1 .
-    - docker push registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:1
-    - docker rmi registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:1
+    - docker build --target validator -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2 .
+    - docker push registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
+    - docker rmi registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
 
 lint-and-unit-test:
   stage: test
@@ -34,10 +34,10 @@ lint-and-unit-test:
 graal-validate-dictionaries:
   stage: test
   when: always
-  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:1
+  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
   script:
     - >
-      /opt/validate
+      dictionary-validator
       test/resources/dict.csv csv
       test/resources/dict.json json
       test/resources/dict.edn edn
