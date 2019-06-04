@@ -1,4 +1,5 @@
-# clj-luwak
+# beagle
+Detector of interesting things in text. Intended use is in the stream search applications. Implementations is based on [Luwak](https://github.com/flaxsearch/luwak).
 
 ## Components
 
