@@ -131,7 +131,7 @@
         anns (annotator "before annotated beagle after annotated")]
     (is (empty? anns)))
 
-  (let [dictionary [{:text "test" :id "1" :synonyms ["Luwak"] :case-sensitive? false}]
+  (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"] :case-sensitive? false}]
         annotator (phrases/annotator dictionary :type-name label)
         anns (annotator "before annotated beagle after annotated")]
     (is (not (empty? anns)))
