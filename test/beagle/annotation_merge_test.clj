@@ -1,7 +1,7 @@
-(ns luwak.annotation-merge-test
+(ns beagle.annotation-merge-test
   (:require [clojure.test :refer :all]
-            [luwak.phrases :as annotator]
-            [luwak.annotation-merger :as merger]))
+            [beagle.phrases :as annotator]
+            [beagle.annotation-merger :as merger]))
 
 (deftest annotator-with-merge-option-test
   (let [dictionary [{:text "1 2"} {:text "2"} {:text "1 2 3 4"}

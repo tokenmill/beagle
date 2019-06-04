@@ -1,4 +1,4 @@
-(ns luwak.schema
+(ns beagle.schema
   (:require [schema.core :as s]))
 
 (s/defschema DictEntry

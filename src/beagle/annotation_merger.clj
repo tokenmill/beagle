@@ -1,4 +1,4 @@
-(ns luwak.annotation-merger)
+(ns beagle.annotation-merger)
 
 (defn related-annotations? [anno1 anno2]
   (<= (:begin-offset anno1) (:begin-offset anno2) (:end-offset anno1)))

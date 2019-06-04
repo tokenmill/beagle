@@ -1,10 +1,10 @@
-(ns luwak.phrases
+(ns beagle.phrases
   (:gen-class)
   (:require [clojure.string :as s]
             [schema.core :as sch]
-            [luwak.annotation-merger :as merger]
-            [luwak.dictionary-optimizer :as optimizer]
-            [luwak.schema :as schema])
+            [beagle.annotation-merger :as merger]
+            [beagle.dictionary-optimizer :as optimizer]
+            [beagle.schema :as schema])
   (:import (uk.co.flax.luwak Monitor MonitorQuery InputDocument MonitorQueryParser)
            (uk.co.flax.luwak.presearcher MatchAllPresearcher)
            (uk.co.flax.luwak.matchers HighlightingMatcher HighlightsMatch HighlightsMatch$Hit)

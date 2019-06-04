@@ -1,8 +1,8 @@
-(ns luwak.phrases-test
+(ns beagle.phrases-test
   (:require [clojure.test :refer :all]
-            [luwak.phrases :as phrases]
+            [beagle.phrases :as phrases]
             [schema.core :as s]
-            [luwak.schema :as schema]))
+            [beagle.schema :as schema]))
 
 (def label "LABEL")
 
@@ -119,24 +119,24 @@
         (is (empty? anns))))))
 
 (deftest synonyms
-  (let [dictionary [{:text "test" :id "1" :synonyms ["luwak"]}]
+  (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"]}]
         annotator (phrases/annotator dictionary :type-name label)
-        anns (annotator "before annotated luwak after annotated")]
+        anns (annotator "before annotated beagle after annotated")]
     (is (not (empty? anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
-    (is (= "luwak" (-> anns first :text))))
+    (is (= "beagle" (-> anns first :text))))
 
   (let [dictionary [{:text "test" :id "1" :synonyms ["Luwak"] :case-sensitive? true}]
         annotator (phrases/annotator dictionary :type-name label)
-        anns (annotator "before annotated luwak after annotated")]
+        anns (annotator "before annotated beagle after annotated")]
     (is (empty? anns)))
 
   (let [dictionary [{:text "test" :id "1" :synonyms ["Luwak"] :case-sensitive? false}]
         annotator (phrases/annotator dictionary :type-name label)
-        anns (annotator "before annotated luwak after annotated")]
+        anns (annotator "before annotated beagle after annotated")]
     (is (not (empty? anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
-    (is (= "luwak" (-> anns first :text))))
+    (is (= "beagle" (-> anns first :text))))
 
   (testing "synonyms with false ascii fold"
     (let [dictionary [{:text "test" :synonyms ["schön"] :ascii-fold? false}]

@@ -1,4 +1,4 @@
-(ns luwak.dictionary-optimizer
+(ns beagle.dictionary-optimizer
   (:require [clojure.set :as set]))
 
 (defn merge-synonyms [group-of-entries]

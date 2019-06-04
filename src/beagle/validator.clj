@@ -1,8 +1,8 @@
-(ns luwak.validator
+(ns beagle.validator
   (:gen-class)
   (:require [schema.core :as s]
-            [luwak.schema :as sch]
-            [luwak.readers :as readers]))
+            [beagle.schema :as sch]
+            [beagle.readers :as readers]))
 
 (defn valid-dictionary? [dictionary]
   (try
