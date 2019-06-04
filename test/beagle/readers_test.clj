@@ -1,8 +1,8 @@
-(ns luwak.readers-test
+(ns beagle.readers-test
   (:require [clojure.test :refer :all]
             [schema.core :as s]
-            [luwak.schema :as sch]
-            [luwak.readers :as readers])
+            [beagle.schema :as sch]
+            [beagle.readers :as readers])
   (:import (java.io ByteArrayInputStream)))
 
 (deftest json-reader

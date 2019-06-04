@@ -12,7 +12,7 @@ Detector of interesting things in text. Intended use is in the stream search app
 ## Phrase annotator usage
 
 ```clojure
-(require '[luwak.phrases :as phrases])
+(require '[beagle.phrases :as phrases])
 
 (let [dictionary [{:text "to be annotated" :id "1"}]
       annotator (phrases/annotator dictionary :type-name "LABEL")]
@@ -66,12 +66,12 @@ Accepts any number of dictionaries to validate as long as they are provided in p
 
 #### Clojure
 
-To use validator directly execute command: `clj -m luwak.validator "/path/to/dictionary/file" "file-type" "/path/to/dictionary/file2" "file-type" & ...`
+To use validator directly execute command: `clj -m beagle.validator "/path/to/dictionary/file" "file-type" "/path/to/dictionary/file2" "file-type" & ...`
 
 ##### Example:
 
 ```
-clj -m luwak.validator "your-dict.csv" "csv" "your-other-dict.json" "json"
+clj -m beagle.validator "your-dict.csv" "csv" "your-other-dict.json" "json"
 ```
 
 #### Docker
@@ -103,7 +103,7 @@ There are cases when dictionary entries can't be merged:
 
 Examples:
 ```clojure
-(require '[luwak.dictionary-optimizer :as optimizer])
+(require '[beagle.dictionary-optimizer :as optimizer])
 
 ; Remove duplicates
 (let [dictionary [{:text "TO BE ANNOTATED" :id "1"}
@@ -139,7 +139,7 @@ Handled cases:
 
 Examples:
 ```clojure
-(require '[luwak.annotation-merger :as merger])
+(require '[beagle.annotation-merger :as merger])
 
 (let [dictionary [{:text "TEST"}
                   {:text "This TEST is"}]

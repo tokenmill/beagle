@@ -23,8 +23,8 @@
                                                   :sha        "8fdc7d29a41620ad3e9e6210fd7140f3a4c7936b"
                                                   :exclusions [org.slf4j/slf4j-nop]}}
               :main-opts  ["-m" "cambada.native-image"
-                           "-m" "luwak.validator"
-                           "-a" "luwak.validator"
+                           "-m" "beagle.validator"
+                           "-a" "beagle.validator"
                            "-O" "-static"
                            "-O" "-initialize-at-build-time"
                            "-O" "H:+ReportExceptionStackTraces"]}}}

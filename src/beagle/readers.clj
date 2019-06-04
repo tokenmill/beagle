@@ -1,4 +1,4 @@
-(ns luwak.readers
+(ns beagle.readers
   (:require [clojure.string :as s]
             [clojure.edn :as edn]
             [clojure.java.io :as io]
