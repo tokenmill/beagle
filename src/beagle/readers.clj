@@ -11,7 +11,7 @@
   `source` - must be something that an input stream can be created."
   [source]
   (with-open [rdr (PushbackReader. (io/reader (io/input-stream source)))]
-    (edn/read rdr)))
+    (doall (edn/read rdr))))
 
 (defn read-csv [source]
   (with-open [reader (io/reader source)]
@@ -45,4 +45,4 @@
 
 (defn read-json [source]
   (with-open [rdr (io/reader (io/input-stream source))]
-    (json/decode-stream rdr true)))
+    (doall (json/decode-stream rdr true))))
