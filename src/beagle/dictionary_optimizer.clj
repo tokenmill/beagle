@@ -57,8 +57,8 @@
             (recur (merge-entries [entry-a entry-b]) remaining acc exceptions))
         (recur entry-a remaining acc (conj exceptions entry-b)))
       (if (seq exceptions)
-        (recur (first exceptions) (rest exceptions) (conj acc entry-a) [])
-        (conj acc entry-a)))))
+        (recur (first exceptions) (rest exceptions) (conj acc (dissoc entry-a :entry-id)) [])
+        (conj acc (dissoc entry-a :entry-id))))))
 
 (defn add-id-to-entries [dictionary]
   (loop [entry (first dictionary)
