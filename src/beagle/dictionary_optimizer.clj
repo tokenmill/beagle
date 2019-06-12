@@ -1,6 +1,7 @@
 (ns beagle.dictionary-optimizer
   (:require [clojure.set :as set]
-            [clojure.tools.logging :as log]))
+            [clojure.pprint :as pretty]
+            [cheshire.core :as json]))
 
 (def optimization-log (atom nil))
 
@@ -77,9 +78,10 @@
    (let [optimized (mapcat (fn [[_ grouped-entries]]
                              (aggregate-entries-by-meta grouped-entries))
                            (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)])
-                                     (add-id-to-entries dictionary)))]
+                                     (add-id-to-entries dictionary)))
+         optimizations {:optimization @optimization-log}]
+     (pretty/pprint optimizations)
+     (spit "optimization.json" (json/encode optimizations))
      (if dry-run?
-       (do (log/infof "Possible optimizations:\n '%s'" @optimization-log)
-           dictionary)
-       (do (log/infof "Optimized dictionary items:\n '%s'" @optimization-log)
-           optimized)))))
+       dictionary
+       optimized))))
