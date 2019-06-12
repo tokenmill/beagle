@@ -1,5 +1,6 @@
 (ns beagle.dictionary-optimizer
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set]
+            [clojure.tools.logging :as log]))
 
 (def optimization-log (atom nil))
 
@@ -26,10 +27,6 @@
   (every? #(= (get meta-a %) (get meta-b %)) (set/intersection (set (keys meta-a)) (set (keys meta-b)))))
 
 (defn possible-optimizations [{synonyms-a :synonyms text :text :as entry-a} {synonyms-b :synonyms :as entry-b}]
-  (println "=====================")
-  (println "ENTRY-A ->>> " entry-a)
-  (println "ENTRY-B ->>> " entry-b)
-  (println "=====================")
   (cond-> {}
           (= (dissoc entry-a :id :entry-id) (dissoc entry-b :id :entry-id)) (conj {:identical true})
           (some #(= text %) synonyms-a) (conj {:entry-a-text-equal-synonym true})
@@ -42,12 +39,12 @@
         (possible-optimizations entry-a entry-b)]
     (swap! optimization-log conj
            (cond-> ""
-                   identical (str (format "\n dictionary item '%s' and '%s' are identical" entry-a-id entry-b-id))
-                   entry-a-text-equal-synonym (str (format "\n dictionary item '%s' has synonym equal to its text" entry-a-id))
-                   entry-b-text-equal-synonym (str (format "\n dictionary item '%s' has synonym equal to its text" entry-b-id))
-                   entry-a-superset (str (format "\n dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a-id entry-b-id))
-                   entry-b-superset (str (format "\n dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b-id entry-a-id))
-                   (empty? optimizations) (str (format "\n dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a-id entry-b-id))))))
+                   identical (str (format "dictionary item '%s' and '%s' are identical" entry-a-id entry-b-id))
+                   entry-a-text-equal-synonym (str (format "dictionary item '%s' has synonym equal to its text" entry-a-id))
+                   entry-b-text-equal-synonym (str (format "dictionary item '%s' has synonym equal to its text" entry-b-id))
+                   entry-a-superset (str (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a-id entry-b-id))
+                   entry-b-superset (str (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b-id entry-a-id))
+                   (empty? optimizations) (str (format "dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a-id entry-b-id))))))
 
 (defn aggregate-entries-by-meta [entries]
   (loop [entry-a (first entries)
@@ -86,7 +83,7 @@
    (reset! optimization-log [])
    (let [optimized (optimize-dictionary dictionary)]
      (if dry-run?
-       (do (println "Possible optimizations ->> " @optimization-log)
+       (do (log/infof "Possible optimizations:\n '%s'" @optimization-log)
            dictionary)
-       (do (println "Optimized entries ->> " @optimization-log)
+       (do (log/infof "Optimized dictionary items:\n '%s'" @optimization-log)
            optimized)))))
