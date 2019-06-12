@@ -69,19 +69,15 @@
       (recur (first remaining) (rest remaining) (conj result (assoc entry :entry-id entry-id)) (inc entry-id))
       result)))
 
-(defn optimize-dictionary [dictionary]
-  (mapcat (fn [[_ grouped-entries]]
-            (aggregate-entries-by-meta grouped-entries))
-          (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)]) (add-id-to-entries dictionary))))
-
 (defn optimize
   ([dictionary]
-   (reset! optimization-log [])
-   (println "Optimized entries ->> " @optimization-log)
-   (optimize-dictionary dictionary))
+   (optimize dictionary false))
   ([dictionary dry-run?]
    (reset! optimization-log [])
-   (let [optimized (optimize-dictionary dictionary)]
+   (let [optimized (mapcat (fn [[_ grouped-entries]]
+                             (aggregate-entries-by-meta grouped-entries))
+                           (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)])
+                                     (add-id-to-entries dictionary)))]
      (if dry-run?
        (do (log/infof "Possible optimizations:\n '%s'" @optimization-log)
            dictionary)
