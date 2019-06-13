@@ -37,14 +37,15 @@
 
 (defn log-optimization [{entry-a-id :entry-id :as entry-a} {entry-b-id :entry-id :as entry-b}]
   (let [{:keys [identical entry-a-text-equal-synonym entry-b-text-equal-synonym entry-a-superset entry-b-superset] :as optimizations}
-        (possible-optimizations entry-a entry-b)]
-    (cond-> optimization-log
-            identical (swap! conj (format "dictionary item '%s' and '%s' are identical" entry-a-id entry-b-id))
-            entry-a-text-equal-synonym (swap! conj (format "dictionary item '%s' has synonym equal to its text" entry-a-id))
-            entry-b-text-equal-synonym (swap! conj (format "dictionary item '%s' has synonym equal to its text" entry-b-id))
-            entry-a-superset (swap! conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a-id entry-b-id))
-            entry-b-superset (swap! conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b-id entry-a-id))
-            (empty? optimizations) (swap! conj (format "dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a-id entry-b-id)))))
+        (possible-optimizations entry-a entry-b)
+        log-entries (cond-> []
+                            identical (conj (format "dictionary item '%s' and '%s' are identical" entry-a-id entry-b-id))
+                            entry-a-text-equal-synonym (conj (format "dictionary item '%s' has synonym equal to its text" entry-a-id))
+                            entry-b-text-equal-synonym (conj (format "dictionary item '%s' has synonym equal to its text" entry-b-id))
+                            entry-a-superset (conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a-id entry-b-id))
+                            entry-b-superset (conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b-id entry-a-id))
+                            (empty? optimizations) (conj (format "dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a-id entry-b-id)))]
+    (swap! optimization-log concat log-entries)))
 
 (defn aggregate-entries-by-meta [entries]
   (loop [entry-a (first entries)

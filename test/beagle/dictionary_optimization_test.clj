@@ -1,7 +1,9 @@
 (ns beagle.dictionary-optimization-test
   (:require [clojure.test :refer :all]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.phrases :as annotations]))
+            [beagle.phrases :as annotations]
+            [cheshire.core :as json]
+            [clojure.java.io :as io]))
 
 (deftest meta-merge-test
   (is (optimizer/mergeable-meta? nil {:meta {:email "123"}}))
@@ -95,3 +97,22 @@
     (let [annotator (annotations/annotator dictionary :type-name "TEST")
           anns (annotator "this is a beagle text test luwak1")]
       (is (= 3 (count anns))))))
+
+(deftest optimization-log
+  (optimizer/optimize [{:text "test", :id "1", :synonyms ["beagle" "luwak1"]}
+                       {:text "test", :id "2", :synonyms ["beagle" "luwak1"]}
+                       {:text "test", :id "3", :synonyms ["test" "luwak2"]}
+                       {:text "test", :id "4", :synonyms ["luwak222"]}
+                       {:text "test", :id "5", :synonyms ["beagle" "luwak1"] :case-sensitive? true}
+                       {:text "test", :id "6", :synonyms ["beagle" "luwak1"] :ascii-fold? true}
+                       {:text "test", :id "7", :synonyms ["beagle"] :ascii-fold? true}]
+                      true)
+  (let [optimizations (:optimization (json/decode (slurp "optimization.json") true))]
+    (is (= ["dictionary item '0' and '1' are identical"
+            "dictionary item '0' synonyms are superset of item '1' synonyms list - mergeable"
+            "dictionary item '1' synonyms are superset of item '0' synonyms list - mergeable"
+            "dictionary item '2' has synonym equal to its text"
+            "dictionary item '0' and '3' differ only by synonyms list - mergeable"
+            "dictionary item '5' synonyms are superset of item '6' synonyms list - mergeable"]
+           optimizations))
+    (io/delete-file "optimization.json")))
