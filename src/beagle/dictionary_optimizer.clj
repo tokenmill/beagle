@@ -1,7 +1,6 @@
 (ns beagle.dictionary-optimizer
   (:require [clojure.set :as set]
-            [clojure.pprint :as pretty]
-            [cheshire.core :as json]))
+            [clojure.pprint :as pretty]))
 
 (def optimization-log (atom nil))
 
@@ -35,17 +34,26 @@
           (set/superset? (set synonyms-a) (set synonyms-b)) (conj {:entry-a-superset true})
           (set/superset? (set synonyms-b) (set synonyms-a)) (conj {:entry-b-superset true})))
 
-(defn log-optimization [{entry-a-id :entry-id :as entry-a} {entry-b-id :entry-id :as entry-b}]
+(defn suggestion
+  ([message {id-a :entry-id :as entry-a}]
+   {:suggestion       (format message id-a)
+    :dictionary-items [entry-a]})
+  ([message {id-a :entry-id :as entry-a} {id-b :entry-id :as entry-b}]
+   {:suggestion       (format message id-a id-b)
+    :dictionary-items [entry-a entry-b]}))
+
+(defn log-optimization [entry-a entry-b]
   (let [{:keys [identical entry-a-text-equal-synonym entry-b-text-equal-synonym entry-a-superset entry-b-superset] :as optimizations}
-        (possible-optimizations entry-a entry-b)
-        log-entries (cond-> []
-                            identical (conj (format "dictionary item '%s' and '%s' are identical" entry-a-id entry-b-id))
-                            entry-a-text-equal-synonym (conj (format "dictionary item '%s' has synonym equal to its text" entry-a-id))
-                            entry-b-text-equal-synonym (conj (format "dictionary item '%s' has synonym equal to its text" entry-b-id))
-                            entry-a-superset (conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a-id entry-b-id))
-                            entry-b-superset (conj (format "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b-id entry-a-id))
-                            (empty? optimizations) (conj (format "dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a-id entry-b-id)))]
-    (swap! optimization-log concat log-entries)))
+        (possible-optimizations entry-a entry-b)]
+    (swap! optimization-log
+           concat
+           (cond-> []
+                   identical (conj (suggestion "dictionary item '%s' and '%s' are identical" entry-a entry-b))
+                   entry-a-text-equal-synonym (conj (suggestion "dictionary item '%s' has synonym equal to its text" entry-a))
+                   entry-b-text-equal-synonym (conj (suggestion "dictionary item '%s' has synonym equal to its text" entry-b))
+                   (and entry-a-superset (not identical)) (conj (suggestion "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-a entry-b))
+                   (and entry-a-superset (not identical)) (conj (suggestion "dictionary item '%s' synonyms are superset of item '%s' synonyms list - mergeable" entry-b entry-a))
+                   (empty? optimizations) (conj (suggestion "dictionary item '%s' and '%s' differ only by synonyms list - mergeable" entry-a entry-b))))))
 
 (defn aggregate-entries-by-meta [entries]
   (loop [entry-a (first entries)
@@ -70,18 +78,15 @@
       (recur (first remaining) (rest remaining) (conj result (assoc entry :entry-id entry-id)) (inc entry-id))
       result)))
 
-(defn optimize
-  ([dictionary]
-   (optimize dictionary false))
-  ([dictionary dry-run?]
-   (reset! optimization-log [])
-   (let [optimized (mapcat (fn [[_ grouped-entries]]
-                             (aggregate-entries-by-meta grouped-entries))
-                           (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)])
-                                     (add-id-to-entries dictionary)))
-         optimizations {:optimization @optimization-log}]
-     (pretty/pprint optimizations)
-     (spit "optimization.json" (json/encode optimizations))
-     (if dry-run?
-       dictionary
-       optimized))))
+(defn optimize [dictionary]
+  (mapcat (fn [[_ grouped-entries]]
+            (aggregate-entries-by-meta grouped-entries))
+          (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)])
+                    (add-id-to-entries dictionary))))
+
+(defn dry-run [dictionary]
+  (reset! optimization-log [])
+  (optimize dictionary)
+  (let [optimizations @optimization-log]
+    (pretty/pprint optimizations)
+    optimizations))

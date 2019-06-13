@@ -99,20 +99,25 @@
       (is (= 3 (count anns))))))
 
 (deftest optimization-log
-  (optimizer/optimize [{:text "test", :id "1", :synonyms ["beagle" "luwak1"]}
-                       {:text "test", :id "2", :synonyms ["beagle" "luwak1"]}
-                       {:text "test", :id "3", :synonyms ["test" "luwak2"]}
-                       {:text "test", :id "4", :synonyms ["luwak222"]}
-                       {:text "test", :id "5", :synonyms ["beagle" "luwak1"] :case-sensitive? true}
-                       {:text "test", :id "6", :synonyms ["beagle" "luwak1"] :ascii-fold? true}
-                       {:text "test", :id "7", :synonyms ["beagle"] :ascii-fold? true}]
-                      true)
-  (let [optimizations (:optimization (json/decode (slurp "optimization.json") true))]
-    (is (= ["dictionary item '0' and '1' are identical"
-            "dictionary item '0' synonyms are superset of item '1' synonyms list - mergeable"
-            "dictionary item '1' synonyms are superset of item '0' synonyms list - mergeable"
-            "dictionary item '2' has synonym equal to its text"
-            "dictionary item '0' and '3' differ only by synonyms list - mergeable"
-            "dictionary item '5' synonyms are superset of item '6' synonyms list - mergeable"]
-           optimizations))
-    (io/delete-file "optimization.json")))
+  (let [suggestions (optimizer/dry-run [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}
+                                        {:text "test" :id "2" :synonyms ["beagle" "luwak1"]}
+                                        {:text "test" :id "3" :synonyms ["test" "luwak2"]}
+                                        {:text "test" :id "4" :synonyms ["luwak222"]}
+                                        {:text "test" :id "5" :synonyms ["beagle" "luwak1"] :case-sensitive? true}
+                                        {:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true}
+                                        {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true}])]
+    (is (= [{:suggestion "dictionary item '0' and '1' are identical"
+             :dictionary-items [{:text "test" :id "1" :synonyms ["beagle" "luwak1"] :entry-id 0}
+                                {:text "test" :id "2" :synonyms ["beagle" "luwak1"] :entry-id 1}]}
+            {:suggestion "dictionary item '2' has synonym equal to its text"
+             :dictionary-items [{:text "test" :id "3" :synonyms ["test" "luwak2"] :entry-id 2}]}
+            {:suggestion "dictionary item '0' and '3' differ only by synonyms list - mergeable"
+             :dictionary-items [{:text "test" :entry-id 0 :synonyms ["beagle" "luwak2" "luwak1"] :id "1"}
+                                {:text "test" :id "4" :synonyms ["luwak222"] :entry-id 3}]}
+            {:suggestion "dictionary item '5' synonyms are superset of item '6' synonyms list - mergeable"
+             :dictionary-items [{:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true :entry-id 5}
+                                {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true :entry-id 6}]}
+            {:suggestion "dictionary item '6' synonyms are superset of item '5' synonyms list - mergeable"
+             :dictionary-items [{:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true :entry-id 6}
+                                {:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true :entry-id 5}]}]
+           suggestions))))
