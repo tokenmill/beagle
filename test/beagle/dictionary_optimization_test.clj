@@ -95,21 +95,3 @@
     (let [annotator (annotations/annotator dictionary :type-name "TEST")
           anns (annotator "this is a beagle text test luwak1")]
       (is (= 3 (count anns))))))
-
-(deftest optimization-log
-  (let [suggestions (optimizer/dry-run [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}
-                                        {:text "test" :id "2" :synonyms ["beagle" "luwak1"]}
-                                        {:text "test" :id "3" :synonyms ["test" "luwak2"]}
-                                        {:text "test" :id "4" :synonyms ["luwak222"]}
-                                        {:text "test" :id "5" :synonyms ["beagle" "luwak1"] :case-sensitive? true}
-                                        {:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true}
-                                        {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true}])]
-    (is (= [{:suggestion "Dictionary items '[1 2 3 4]' have identical `[text case-sensitivity ascii-folding] features."
-             :dictionary-items [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}
-                                {:text "test" :id "2" :synonyms ["beagle" "luwak1"]}
-                                {:text "test" :id "3" :synonyms ["test" "luwak2"]}
-                                {:text "test" :id "4" :synonyms ["luwak222"]}]}
-            {:suggestion "Dictionary items '[6 7]' have identical `[text case-sensitivity ascii-folding] features."
-             :dictionary-items [{:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true}
-                                {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true}]}]
-           suggestions))))
