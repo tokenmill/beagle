@@ -1,9 +1,7 @@
 (ns beagle.dictionary-optimization-test
   (:require [clojure.test :refer :all]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.phrases :as annotations]
-            [cheshire.core :as json]
-            [clojure.java.io :as io]))
+            [beagle.phrases :as annotations]))
 
 (deftest meta-merge-test
   (is (optimizer/mergeable-meta? nil {:meta {:email "123"}}))
@@ -106,18 +104,12 @@
                                         {:text "test" :id "5" :synonyms ["beagle" "luwak1"] :case-sensitive? true}
                                         {:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true}
                                         {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true}])]
-    (is (= [{:suggestion "dictionary item '0' and '1' are identical"
-             :dictionary-items [{:text "test" :id "1" :synonyms ["beagle" "luwak1"] :entry-id 0}
-                                {:text "test" :id "2" :synonyms ["beagle" "luwak1"] :entry-id 1}]}
-            {:suggestion "dictionary item '2' has synonym equal to its text"
-             :dictionary-items [{:text "test" :id "3" :synonyms ["test" "luwak2"] :entry-id 2}]}
-            {:suggestion "dictionary item '0' and '3' differ only by synonyms list - mergeable"
-             :dictionary-items [{:text "test" :entry-id 0 :synonyms ["beagle" "luwak2" "luwak1"] :id "1"}
-                                {:text "test" :id "4" :synonyms ["luwak222"] :entry-id 3}]}
-            {:suggestion "dictionary item '5' synonyms are superset of item '6' synonyms list - mergeable"
-             :dictionary-items [{:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true :entry-id 5}
-                                {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true :entry-id 6}]}
-            {:suggestion "dictionary item '6' synonyms are superset of item '5' synonyms list - mergeable"
-             :dictionary-items [{:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true :entry-id 6}
-                                {:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true :entry-id 5}]}]
+    (is (= [{:suggestion "Dictionary items '[1 2 3 4]' have identical `[text case-sensitivity ascii-folding] features."
+             :dictionary-items [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}
+                                {:text "test" :id "2" :synonyms ["beagle" "luwak1"]}
+                                {:text "test" :id "3" :synonyms ["test" "luwak2"]}
+                                {:text "test" :id "4" :synonyms ["luwak222"]}]}
+            {:suggestion "Dictionary items '[6 7]' have identical `[text case-sensitivity ascii-folding] features."
+             :dictionary-items [{:text "test" :id "6" :synonyms ["beagle" "luwak1"] :ascii-fold? true}
+                                {:text "test" :id "7" :synonyms ["beagle"] :ascii-fold? true}]}]
            suggestions))))
