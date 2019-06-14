@@ -1,5 +1,6 @@
 (ns beagle.dictionary-optimizer
-  (:require [clojure.set :as set]))
+  (:require [clojure.set :as set]
+            [clojure.string :as str]))
 
 (defn merge-synonyms [group-of-entries]
   (reduce (fn [synonyms-set {synonyms :synonyms}]
@@ -36,7 +37,22 @@
         (recur (first exceptions) (rest exceptions) (conj acc entry-a) [])
         (conj acc entry-a)))))
 
+(defn group-dictionary-entries [dictionary]
+  (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)]) dictionary))
+
 (defn optimize [dictionary]
-  (mapcat (fn [[_ grouped-entries]]
-            (aggregate-entries-by-meta grouped-entries))
-          (group-by (fn [entry] [(:text entry) (:case-sensitive? entry) (:ascii-fold? entry)]) dictionary)))
+  (mapcat (fn [[_ grouped-entries]] (aggregate-entries-by-meta grouped-entries))
+          (group-dictionary-entries dictionary)))
+
+(defn optimization-suggestion [entries]
+  {:suggestion       (-> (format "Dictionary items '%s' have identical `[text case-sensitivity ascii-folding] features."
+                                 (reduce #(conj %1 (or (:id %2) (:text %2))) [] entries))
+                         (str/replace #"\"" ""))
+   :dictionary-items entries})
+
+(defn dry-run [dictionary]
+  (reduce (fn [acc [_ grouped-entries]]
+            (if (< 1 (count grouped-entries))
+              (conj acc (optimization-suggestion grouped-entries))
+              acc))
+       [] (group-dictionary-entries dictionary)))

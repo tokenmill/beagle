@@ -18,3 +18,4 @@ target/*
 .eastwood
 *.iml
 .env
+*.json
