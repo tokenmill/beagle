@@ -168,3 +168,9 @@
         annotator (phrases/annotator dictionary :tokenizer :whitespace)
         anns (annotator "before annotated \"TEST-test\".")]
     (is (empty? anns))))
+
+(deftest overlapping-phrases
+  (let [dictionary [{:text "test phrase test" :case-sensitive? false}]
+        annotator (phrases/annotator dictionary :tokenizer :whitespace)
+        anns (annotator "start test phrase test phrase test end")]
+    (is (= 2 (count anns)))))

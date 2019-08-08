@@ -89,31 +89,24 @@
       (.getMatches)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
-  (let [[_ hits] (first (.getHits match))
-        start-offset (.-startOffset ^HighlightsMatch$Hit (first hits))
-        end-offset (.-endOffset ^HighlightsMatch$Hit (first hits))
-        meta (.getMetadata (.getQuery monitor (.getQueryId match)))]
-    {:text          (subs text start-offset end-offset)
-     :type          (or (get meta "_type") type-name)
-     :dict-entry-id (.getQueryId match)
-     :meta          (into {} meta)
-     :begin-offset  start-offset
-     :end-offset    end-offset}))
+  (mapcat
+    (fn [[_ hits]]
+      (let [meta (.getMetadata (.getQuery monitor (.getQueryId match)))]
+        (map (fn [hit]
+               (let [
+                     start-offset (.-startOffset ^HighlightsMatch$Hit hit)
+                     end-offset (.-endOffset ^HighlightsMatch$Hit hit)]
+                 {:text          (subs text start-offset end-offset)
+                  :type          (or (get meta "_type") type-name)
+                  :dict-entry-id (.getQueryId match)
+                  :meta          (into {} meta)
+                  :begin-offset  start-offset
+                  :end-offset    end-offset})) hits)))
+    (.getHits match)))
 
 (defn mark-text [^String text ^Monitor monitor ^String type-name tokenizer]
   (->> (matches text monitor tokenizer)
-       (map #(match->annotation text monitor type-name %))
-       (flatten)))
-
-(defn escape-query-string [query-string]
-  (-> query-string
-      (s/replace #"([\"\\])" "\\\\\\\\\\\\$1")
-      (s/replace #"([:\/+\~\-\|<>&\(\)\[\]=!{}\^\*\?])" "\\\\\\\\$1")
-      (s/replace #"(\bAND\b)" "\\\\\\\\$1")
-      (s/replace #"(\bOR\b)" "\\\\\\\\$1")
-      (s/trim)))
-
-(defn as-phrase-query [query-string] (str "\"" (escape-query-string query-string) "\""))
+       (mapcat #(match->annotation text monitor type-name %))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]
