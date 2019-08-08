@@ -6,13 +6,10 @@
             [schema.core :as sch]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.schema :as schema])
+            [beagle.schema :as schema]
+            [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
            (java.io PushbackReader)
-           (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer)
-           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
-           (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer)
-           (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
@@ -20,53 +17,6 @@
                                       MonitorQuerySerializer HighlightsMatch$Hit)
            (org.apache.lucene.search PhraseQuery)
            (org.apache.lucene.util BytesRef)))
-
-(def analysis-keys [:ascii-fold? :case-sensitive?])
-
-(def default-conf {:case-sensitive? true :ascii-fold? false})
-
-(defn kw->tokenizer [kw]
-  (case kw
-    :standard (StandardTokenizer.)
-    :whitespace (WhitespaceTokenizer.)
-    (StandardTokenizer.)))
-
-(defn analyzers [conf tokenizer-kw]
-  (let [^Tokenizer tokenizer (kw->tokenizer tokenizer-kw)]
-    (case conf
-      #{} {:analyzer   (proxy [Analyzer] []
-                         (createComponents [^String field-name]
-                           (Analyzer$TokenStreamComponents.
-                             tokenizer (ClassicFilter. tokenizer))))
-           :field-name "text"}
-      #{:lowercase} {:analyzer   (proxy [Analyzer] []
-                                   (createComponents [^String field-name]
-                                     (Analyzer$TokenStreamComponents.
-                                       tokenizer (LowerCaseFilter. tokenizer))))
-                     :field-name "text.lowercased"}
-      #{:ascii-fold} {:analyzer   (proxy [Analyzer] []
-                                    (createComponents [^String field-name]
-                                      (Analyzer$TokenStreamComponents.
-                                        tokenizer (ASCIIFoldingFilter. tokenizer))))
-                      :field-name "text.ascii-folded"}
-      #{:lowercase :ascii-fold} {:analyzer   (proxy [Analyzer] []
-                                               (createComponents [^String field-name]
-                                                 (Analyzer$TokenStreamComponents.
-                                                   tokenizer (ASCIIFoldingFilter. (LowerCaseFilter. tokenizer)))))
-                                 :field-name "text.ascii-folded-lowercased"})))
-
-(defn conf->analyzers [{:keys [ascii-fold? case-sensitive?]
-                        :or   {ascii-fold?     (:ascii-fold? default-conf)
-                               case-sensitive? (:case-sensitive? default-conf)}}]
-  (cond-> #{}
-          (false? case-sensitive?) (conj :lowercase)
-          (true? ascii-fold?) (conj :ascii-fold)))
-
-(defn ^Analyzer get-string-analyzer [analysis-conf tokenizer-kw]
-  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer-kw) [:analyzer]))
-
-(defn ^String get-field-name [analysis-conf tokenizer-kw]
-  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer-kw) [:field-name]))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
   (mapcat
@@ -91,8 +41,8 @@
     (.setStoreTermVectors true)
     (.setStoreTermVectorOffsets true)))
 
-(defn annotate-text [^String text ^Monitor monitor analysis-conf ^String type-name tokenizer-kw]
-  (let [field-name (get-field-name analysis-conf tokenizer-kw)
+(defn annotate-text [^String text ^Monitor monitor analysis-conf ^String type-name text-analysis-resources]
+  (let [field-name (text-analysis/get-field-name analysis-conf text-analysis-resources)
         doc (doto (Document.)
               (.add (Field. ^String field-name text field-type)))
         matches (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))]
@@ -114,8 +64,8 @@
       (catch Exception e
         (.printStackTrace e)))))
 
-(defn phrase->strings [dict-entry tokenizer-kw]
-  (let [analyzer (get-string-analyzer dict-entry tokenizer-kw)
+(defn phrase->strings [dict-entry text-analysis-resources]
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry text-analysis-resources)
         token-stream (.tokenStream analyzer "not-important" ^String (:text dict-entry))
         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
     (.reset token-stream)
@@ -126,27 +76,28 @@
                                      (.close token-stream)
                                      (reduced acc)))) [] (range)))))
 
-(defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} tokenizer idx]
+(defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} text-analysis-resources idx]
   (let [query-id (or id (str idx))
         metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
     (MonitorQuery. query-id
-                   (PhraseQuery. (get-field-name dict-entry tokenizer) (phrase->strings dict-entry tokenizer))
+                   (PhraseQuery. (text-analysis/get-field-name dict-entry text-analysis-resources)
+                                 (phrase->strings dict-entry text-analysis-resources))
                    text
                    metadata)))
 
-(defn dict-entries->monitor-queries [dict-entries tokenizer]
+(defn dict-entries->monitor-queries [dict-entries text-analysis-resources]
   (flatten
     (map (fn [{id :id :as dict-entry} idx]
            (let [query-id (or id (str idx))]
              (cons
-               (dict-entry->monitor-query dict-entry tokenizer idx)
-               (map #(dict-entry->monitor-query % tokenizer nil) (prepare-synonyms query-id dict-entry)))))
+               (dict-entry->monitor-query dict-entry text-analysis-resources idx)
+               (map #(dict-entry->monitor-query % text-analysis-resources nil) (prepare-synonyms query-id dict-entry)))))
          dict-entries (range))))
 
-(defn prepare-monitor [monitor dict-entries tokenizer]
-  (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries tokenizer)))
+(defn prepare-monitor [monitor dict-entries text-analysis-resources]
+  (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries text-analysis-resources)))
 
-(defn create-monitor [analysis-conf tokenizer]
+(defn create-monitor [analysis-conf text-analysis-resources]
   (let [^MonitorConfiguration config (MonitorConfiguration.)]
     (.setIndexPath config nil
                    (reify MonitorQuerySerializer
@@ -159,18 +110,19 @@
                        (let [dq (edn/read (PushbackReader. (io/reader (.bytes binary-value))))]
                          (MonitorQuery. (:query-id dq)
                                         (PhraseQuery. "field" (phrase->strings (assoc analysis-conf
-                                                                                 :text (:query dq)) tokenizer))
+                                                                                 :text (:query dq))
+                                                                               text-analysis-resources))
                                         (:query dq)
                                         (:metadata dq))))))
-    (Monitor. (get-string-analyzer analysis-conf tokenizer) config)))
+    (Monitor. (text-analysis/get-string-analyzer analysis-conf text-analysis-resources) config)))
 
-(defn setup-monitors [dictionary tokenizer-kw]
+(defn setup-monitors [dictionary text-analysis-resources]
   (reduce-kv (fn [acc _ v]
-               (let [analysis-conf (select-keys (first v) analysis-keys)
-                     monitor (create-monitor analysis-conf tokenizer-kw)]
-                 (prepare-monitor monitor v tokenizer-kw)
+               (let [analysis-conf (select-keys (first v) text-analysis/analysis-keys)
+                     monitor (create-monitor analysis-conf text-analysis-resources)]
+                 (prepare-monitor monitor v text-analysis-resources)
                  (conj acc {:analysis-conf analysis-conf :monitor monitor})))
-             [] (group-by conf->analyzers dictionary)))
+             [] (group-by text-analysis/conf->analyzers dictionary)))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
@@ -187,13 +139,14 @@
   (when validate-dictionary? (sch/validate schema/Dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        monitors (setup-monitors dictionary tokenizer)]
+        text-analysis-resources (text-analysis/analyzers tokenizer)
+        monitors (setup-monitors dictionary text-analysis-resources)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
         (let [annotations (map post-process
                                (mapcat (fn [{:keys [monitor analysis-conf]}]
-                                         (annotate-text text monitor analysis-conf type-name tokenizer)) monitors))]
+                                         (annotate-text text monitor analysis-conf type-name text-analysis-resources)) monitors))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))
