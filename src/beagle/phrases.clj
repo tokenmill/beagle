@@ -33,8 +33,8 @@
     :whitespace (WhitespaceTokenizer.)
     (StandardTokenizer.)))
 
-(defn analyzers [conf tokenizer]
-  (let [^Tokenizer tokenizer (kw->tokenizer tokenizer)]
+(defn analyzers [conf tokenizer-kw]
+  (let [^Tokenizer tokenizer (kw->tokenizer tokenizer-kw)]
     (case conf
       #{} {:analyzer   (proxy [Analyzer] []
                          (createComponents [^String field-name]
@@ -64,11 +64,11 @@
           (false? case-sensitive?) (conj :lowercase)
           (true? ascii-fold?) (conj :ascii-fold)))
 
-(defn ^Analyzer get-string-analyzer [analysis-conf tokenizer]
-  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer) [:analyzer]))
+(defn ^Analyzer get-string-analyzer [analysis-conf tokenizer-kw]
+  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer-kw) [:analyzer]))
 
-(defn ^String get-field-name [analysis-conf tokenizer]
-  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer) [:field-name]))
+(defn ^String get-field-name [analysis-conf tokenizer-kw]
+  (get-in (analyzers (conf->analyzers analysis-conf) tokenizer-kw) [:field-name]))
 
 (def ^FieldType field-type
   (doto (FieldType.)
@@ -77,15 +77,15 @@
     (.setStoreTermVectors true)
     (.setStoreTermVectorOffsets true)))
 
-(defn ^Document input-document [^String text tokenizer]
+(defn ^Document input-document [^String text tokenizer-kw]
   (doto (Document.)
-    (.add (Field. (get-field-name keyword-analysis-conf tokenizer) text field-type))
-    (.add (Field. (get-field-name lowercase-analysis-conf tokenizer) text field-type))
-    (.add (Field. (get-field-name ascii-folding-analysis-conf tokenizer) text field-type))
-    (.add (Field. (get-field-name lowercase-ascii-fold-analysis-conf tokenizer) text field-type))))
+    (.add (Field. (get-field-name keyword-analysis-conf tokenizer-kw) text field-type))
+    (.add (Field. (get-field-name lowercase-analysis-conf tokenizer-kw) text field-type))
+    (.add (Field. (get-field-name ascii-folding-analysis-conf tokenizer-kw) text field-type))
+    (.add (Field. (get-field-name lowercase-ascii-fold-analysis-conf tokenizer-kw) text field-type))))
 
-(defn matches [text ^Monitor monitor tokenizer]
-  (-> (.match monitor (input-document text tokenizer) (HighlightsMatch/MATCHER))
+(defn matches [text ^Monitor monitor tokenizer-kw]
+  (-> (.match monitor (input-document text tokenizer-kw) (HighlightsMatch/MATCHER))
       (.getMatches)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
@@ -104,8 +104,8 @@
                   :end-offset    end-offset})) hits)))
     (.getHits match)))
 
-(defn mark-text [^String text ^Monitor monitor ^String type-name tokenizer]
-  (->> (matches text monitor tokenizer)
+(defn mark-text [^String text ^Monitor monitor ^String type-name tokenizer-kw]
+  (->> (matches text monitor tokenizer-kw)
        (mapcat #(match->annotation text monitor type-name %))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
@@ -176,18 +176,18 @@
 (defn get-dictionary-entries [groups analysis-conf]
   (get groups (conf->analyzers analysis-conf)))
 
-(defn setup-monitors [dictionary tokenizer]
-  (let [^Monitor kw-monitor (create-monitor keyword-analysis-conf tokenizer)
-        ^Monitor lowercased-monitor (create-monitor lowercase-analysis-conf tokenizer)
-        ^Monitor ascii-folded-monitor (create-monitor ascii-folding-analysis-conf tokenizer)
-        ^Monitor lowercased-ascii-folded-monitor (create-monitor lowercase-ascii-fold-analysis-conf tokenizer)
+(defn setup-monitors [dictionary tokenizer-kw]
+  (let [^Monitor kw-monitor (create-monitor keyword-analysis-conf tokenizer-kw)
+        ^Monitor lowercased-monitor (create-monitor lowercase-analysis-conf tokenizer-kw)
+        ^Monitor ascii-folded-monitor (create-monitor ascii-folding-analysis-conf tokenizer-kw)
+        ^Monitor lowercased-ascii-folded-monitor (create-monitor lowercase-ascii-fold-analysis-conf tokenizer-kw)
 
         groups (group-by conf->analyzers dictionary)
 
-        _ (prepare-monitor kw-monitor (get-dictionary-entries groups keyword-analysis-conf) tokenizer)
-        _ (prepare-monitor lowercased-monitor (get-dictionary-entries groups lowercase-analysis-conf) tokenizer)
-        _ (prepare-monitor ascii-folded-monitor (get-dictionary-entries groups ascii-folding-analysis-conf) tokenizer)
-        _ (prepare-monitor lowercased-ascii-folded-monitor (get-dictionary-entries groups lowercase-ascii-fold-analysis-conf) tokenizer)]
+        _ (prepare-monitor kw-monitor (get-dictionary-entries groups keyword-analysis-conf) tokenizer-kw)
+        _ (prepare-monitor lowercased-monitor (get-dictionary-entries groups lowercase-analysis-conf) tokenizer-kw)
+        _ (prepare-monitor ascii-folded-monitor (get-dictionary-entries groups ascii-folding-analysis-conf) tokenizer-kw)
+        _ (prepare-monitor lowercased-ascii-folded-monitor (get-dictionary-entries groups lowercase-ascii-fold-analysis-conf) tokenizer-kw)]
     [kw-monitor lowercased-monitor ascii-folded-monitor lowercased-ascii-folded-monitor]))
 
 (defn synonym-annotation? [annotation]
