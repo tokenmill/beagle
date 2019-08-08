@@ -1,6 +1,8 @@
-lint:
-	clojure -A:kibit
-	clojure -A:eastwood
+lint-code:
+	docker run \
+	-v $(PWD)/src:/src -v $(PWD)/spec:/spec -v $(PWD)/test:/test \
+	--rm borkdude/clj-kondo clj-kondo \
+	--lint src spec test
 
 unit-test:
 	clojure -A:test

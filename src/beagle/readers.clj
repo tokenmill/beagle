@@ -19,7 +19,7 @@
           kvs (map keyword header)]
       (->> lines
            (map #(apply hash-map (interleave kvs %)))
-           (map #(into {} (remove (fn [[k v]] (s/blank? v)) %)))
+           (map #(into {} (remove (fn [[_ v]] (s/blank? v)) %)))
            (map (fn [{:keys [synonyms] :as dict}]
                   (if-not (s/blank? synonyms)
                     (assoc dict :synonyms (map s/trim (s/split synonyms #";")))
@@ -38,7 +38,7 @@
                                               {}
                                               (->> (map s/trim (s/split meta #";"))
                                                    (partition-all 2)
-                                                   (remove (fn [[k v]] (s/blank? (str v)))))))
+                                                   (remove (fn [[_ v]] (s/blank? (str v)))))))
 
                     dict)))
            (doall)))))
