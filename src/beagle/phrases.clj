@@ -3,10 +3,9 @@
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
-            [schema.core :as sch]
+            [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.schema :as schema]
             [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
            (java.io PushbackReader)
@@ -143,7 +142,7 @@
   - optimize-dictionary?: if set to true then optimizes dictionary before creating the monitor, default false
   - tokenizer: a keyword one of #{:standard :whitespace}, default :standard"
   [dictionary & {:keys [type-name validate-dictionary? optimize-dictionary? tokenizer]}]
-  (when validate-dictionary? (sch/validate schema/Dictionary dictionary))
+  (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
         text-analysis-resources (text-analysis/analyzers tokenizer)

@@ -4,9 +4,12 @@
             [beagle.schema :as sch]
             [beagle.readers :as readers]))
 
+(defn validate-dictionary [dictionary]
+  (s/validate sch/Dictionary dictionary))
+
 (defn valid-dictionary? [dictionary]
   (try
-    (seq (s/validate sch/Dictionary dictionary))
+    (seq (validate-dictionary dictionary))
     (catch Exception _)))
 
 (def supported-dictionary-file-types #{"csv" "json" "edn"})
