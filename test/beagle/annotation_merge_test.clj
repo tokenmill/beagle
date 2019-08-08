@@ -1,5 +1,5 @@
 (ns beagle.annotation-merge-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [beagle.phrases :as annotator]
             [beagle.annotation-merger :as merger]))
 

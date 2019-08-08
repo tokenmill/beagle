@@ -1,5 +1,5 @@
 (ns beagle.readers-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [clojure.spec.alpha :as s]
             [beagle.schema :as sch]
             [beagle.readers :as readers])

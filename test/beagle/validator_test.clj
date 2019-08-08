@@ -1,5 +1,5 @@
 (ns beagle.validator-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [beagle.validator :as validator]))
 
 (deftest basic-cases

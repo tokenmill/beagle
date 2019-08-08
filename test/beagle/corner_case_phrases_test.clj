@@ -1,5 +1,5 @@
 (ns beagle.corner-case-phrases-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [beagle.phrases :as phrases])
   (:import (org.jsoup Jsoup)))
 
