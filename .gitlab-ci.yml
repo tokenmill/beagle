@@ -22,13 +22,17 @@ publish-dictionary-validator-docker:
     - docker push registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
     - docker rmi registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
 
-lint-and-unit-test:
+lint:
+  stage: test
+  image: borkdude/clj-kondo
+  when: always
+  script: clj-kondo --lint src test
+
+unit-test:
   stage: test
   when: always
   image: clojure:tools-deps-alpine
   script:
-    - clojure -A:kibit
-    - clojure -A:eastwood
     - clojure -A:test
 
 graal-validate-dictionaries:

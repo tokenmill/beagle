@@ -1,4 +1,4 @@
-FROM oracle/graalvm-ce:19.0.0 as builder
+FROM oracle/graalvm-ce:19.1.1 as builder
 RUN gu install native-image
 
 ENV GRAALVM_HOME=$JAVA_HOME

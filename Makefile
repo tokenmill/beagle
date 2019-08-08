@@ -1,6 +1,5 @@
-lint:
-	clojure -A:kibit
-	clojure -A:eastwood
+lint-code:
+	clojure -A:clj-kondo
 
 unit-test:
 	clojure -A:test

@@ -1,7 +1,8 @@
 (ns beagle.dictionary-optimization-test
   (:require [clojure.test :refer :all]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.phrases :as annotations]))
+            [beagle.phrases :as annotations]
+            [beagle.text-analysis :as text-analysis]))
 
 (deftest meta-merge-test
   (is (optimizer/mergeable-meta? nil {:meta {:email "123"}}))
@@ -90,7 +91,7 @@
 
 (deftest synonym-optimization
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}]
-        monitor-queries (annotations/dict-entries->monitor-queries dictionary)]
+        monitor-queries (annotations/dict-entries->monitor-queries dictionary (text-analysis/analyzers :standard))]
     (is (= 3 (count monitor-queries)))
     (let [annotator (annotations/annotator dictionary :type-name "TEST")
           anns (annotator "this is a beagle text test luwak1")]
