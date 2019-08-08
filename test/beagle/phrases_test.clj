@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [beagle.phrases :as phrases]
             [schema.core :as s]
-            [beagle.schema :as schema]))
+            [beagle.schema :as schema])
+  (:import (java.net URL)))
 
 (def label "LABEL")
 
@@ -174,3 +175,12 @@
         annotator (phrases/annotator dictionary :tokenizer :whitespace)
         anns (annotator "start test phrase test phrase test end")]
     (is (= 2 (count anns)))))
+
+(deftest corner-cases
+  (let [annotator (phrases/annotator [{:text "N-Able N-Central"
+                                       :case-sensitive? false}])
+        url  (URL.
+               "https://www.graalvm.org/truffle/javadoc/com/oracle/truffle/api/source/Source.html")
+        text (some-> (Jsoup/parse url 2000) (.body) (.text))]
+
+    (is (empty? (annotator text)))))
