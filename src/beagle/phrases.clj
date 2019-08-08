@@ -23,8 +23,7 @@
     (fn [[_ hits]]
       (let [meta (.getMetadata (.getQuery monitor (.getQueryId match)))]
         (map (fn [hit]
-               (let [
-                     start-offset (.-startOffset ^HighlightsMatch$Hit hit)
+               (let [start-offset (.-startOffset ^HighlightsMatch$Hit hit)
                      end-offset (.-endOffset ^HighlightsMatch$Hit hit)]
                  {:text          (subs text start-offset end-offset)
                   :type          (or (get meta "_type") type-name)
@@ -58,11 +57,10 @@
        synonyms))
 
 (defn save-queries-in-monitor [^Monitor monitor monitor-queries]
-  (doseq [portion (partition-all 4000 monitor-queries)]
-    (try
-      (.register monitor ^Iterable portion)
-      (catch Exception e
-        (.printStackTrace e)))))
+  (try
+    (.register monitor ^Iterable monitor-queries)
+    (catch Exception e
+      (.printStackTrace e))))
 
 (defn phrase->strings [dict-entry text-analysis-resources]
   (let [analyzer (text-analysis/get-string-analyzer dict-entry text-analysis-resources)
