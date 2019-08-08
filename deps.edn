@@ -10,6 +10,10 @@
              "clojars" {:url "https://repo.clojars.org/"}}
  :aliases   {:dev
              {:extra-deps {org.jsoup/jsoup {:mvn/version "1.11.3"}}}
+             :clj-kondo
+             {:main-opts  ["-m" "clj-kondo.main --lint src test"]
+              :extra-deps {clj-kondo {:mvn/version "2019.07.31-alpha"}}
+              :jvm-opts   ["-Dclojure.main.report=stderr"]}
              :test
              {:extra-paths ["test"]
               :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"

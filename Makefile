@@ -1,8 +1,5 @@
 lint-code:
-	docker run \
-	-v $(PWD)/src:/src -v $(PWD)/spec:/spec -v $(PWD)/test:/test \
-	--rm borkdude/clj-kondo clj-kondo \
-	--lint src spec test
+	clojure -A:clj-kondo
 
 unit-test:
 	clojure -A:test
