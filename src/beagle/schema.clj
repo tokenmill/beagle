@@ -1,23 +1,27 @@
 (ns beagle.schema
-  (:require [schema.core :as s]))
+  (:require [clojure.spec.alpha :as s]))
 
-(s/defschema DictEntry
-  {:text                             s/Str
-   (s/optional-key :type)            s/Str
-   (s/optional-key :id)              s/Str
-   (s/optional-key :synonyms)        [s/Str]
-   (s/optional-key :case-sensitive?) s/Bool
-   (s/optional-key :ascii-fold?)     s/Bool
-   (s/optional-key :meta)            {(s/cond-pre s/Keyword s/Str) s/Str}})
+(s/def ::text string?)
+(s/def ::type string?)
+(s/def ::id string?)
+(s/def ::synonyms (s/coll-of string?))
+(s/def ::case-sensitive? boolean?)
+(s/def ::ascii-fold? boolean?)
+(s/def ::meta (s/map-of #(or (string? %) (keyword? %)) string?))
 
-(s/defschema Dictionary [DictEntry])
+(s/def ::dict-entry
+  (s/keys :req-un [::text]
+          :opt-un [::type ::id ::synonyms ::meta
+                   ::case-sensitive? ::ascii-fold?]))
 
-(s/defschema DictionaryAnnotation
-  {:type                           s/Str
-   :text                           s/Str
-   :begin-offset                   s/Num
-   :end-offset                     s/Num
-   (s/optional-key :dict-entry-id) s/Str
-   (s/optional-key :meta)          {(s/cond-pre s/Keyword s/Str) s/Str}})
+(s/def ::dictionary (s/coll-of ::dict-entry))
 
-(s/defschema Annotations [DictionaryAnnotation])
+(s/def ::begin-offset pos-int?)
+(s/def ::end-offset pos-int?)
+(s/def ::dict-entry-id string?)
+
+(s/def ::dictionary-annotation
+  (s/keys :req-un [::text ::type ::begin-offset ::end-offset]
+          :opt-un [::dict-entry-id ::meta]))
+
+(s/def ::annotations (s/coll-of ::dictionary-annotation))

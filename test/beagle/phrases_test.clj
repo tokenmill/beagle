@@ -1,7 +1,7 @@
 (ns beagle.phrases-test
   (:require [clojure.test :refer :all]
+            [clojure.spec.alpha :as s]
             [beagle.phrases :as phrases]
-            [schema.core :as s]
             [beagle.schema :as schema]
             [beagle.text-analysis :as text-analysis]))
 
@@ -11,7 +11,7 @@
   (let [dictionary [{:text "test phrase" :id "1" :meta {:test "test"} :type "CUSTOM"}]
         annotator (phrases/annotator dictionary :type-name label)
         anns (annotator "before annotated test phrase after annotated")]
-    (is (seq (s/validate schema/Annotations anns)))
+    (is (seq (s/conform ::schema/annotations anns)))
     (is (not (empty? anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
     (is (= "CUSTOM" (-> anns first :type)))

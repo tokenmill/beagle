@@ -1,11 +1,11 @@
 (ns beagle.validator
   (:gen-class)
-  (:require [schema.core :as s]
+  (:require [clojure.spec.alpha :as s]
             [beagle.schema :as sch]
             [beagle.readers :as readers]))
 
 (defn validate-dictionary [dictionary]
-  (s/validate sch/Dictionary dictionary))
+  (s/conform ::sch/dictionary dictionary))
 
 (defn valid-dictionary? [dictionary]
   (try
