@@ -174,3 +174,50 @@
         annotator (phrases/annotator dictionary :tokenizer :whitespace)
         anns (annotator "start test phrase test phrase test end")]
     (is (= 2 (count anns)))))
+
+(deftest monitors-setup
+  (let [dictionary [{:text "test phrase test"}]
+        monitors (phrases/setup-monitors dictionary :standard)]
+    (is (= #{#{}} (set (map phrases/conf->analyzers dictionary))))
+    (is (= 1 (count monitors))))
+  (let [dictionary [{:text "test phrase test"}
+                    {:text "test phrase test" :case-sensitive? false}]]
+    (is (= #{#{} #{:lowercase}}
+           (set (map phrases/conf->analyzers dictionary))))
+    (is (= 2 (count (phrases/setup-monitors
+                      dictionary
+                      :standard)))))
+  (let [dictionary [{:text "test phrase test"}
+                    {:text "test phrase test" :ascii-fold? true}]]
+    (is (= #{#{} #{:ascii-fold}}
+           (set (map phrases/conf->analyzers dictionary))))
+    (is (= 2 (count (phrases/setup-monitors
+                      dictionary
+                      :standard)))))
+  (let [dictionary [{:text "test phrase test"}
+                    {:text "test phrase test"
+                     :ascii-fold? false
+                     :case-sensitive? false}
+                    {:text "test phrase test"
+                     :ascii-fold? true
+                     :case-sensitive? true}]]
+    (is (= #{#{} #{:lowercase} #{:ascii-fold}}
+           (set (map phrases/conf->analyzers dictionary))))
+    (is (= 3 (count (phrases/setup-monitors
+                      dictionary
+                      :standard)))))
+  (let [dictionary [{:text "test phrase test"}
+                    {:text "test phrase test"
+                     :ascii-fold? false
+                     :case-sensitive? false}
+                    {:text "test phrase test"
+                     :ascii-fold? true
+                     :case-sensitive? true}
+                    {:text "test phrase test"
+                     :ascii-fold? true
+                     :case-sensitive? false}]]
+    (is (= #{#{} #{:lowercase} #{:ascii-fold} #{:ascii-fold :lowercase}}
+           (set (map phrases/conf->analyzers dictionary))))
+    (is (= 4 (count (phrases/setup-monitors
+                      dictionary
+                      :standard))))))
