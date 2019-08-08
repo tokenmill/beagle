@@ -1,5 +1,8 @@
 # beagle
-Detector of interesting things in text. Intended use is in the stream search applications. Implementations is based on [Luwak](https://github.com/flaxsearch/luwak).
+
+Detector of interesting things in text. Intended use is in the stream search applications. 
+
+Implementations is based on [Lucene monitor](https://github.com/apache/lucene-solr/tree/master/lucene/monitor) which is based on [Luwak](https://github.com/flaxsearch/luwak).
 
 ## Components
 
