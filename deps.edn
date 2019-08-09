@@ -3,13 +3,13 @@
              org.clojure/tools.logging        {:mvn/version "0.5.0"}
              org.apache.lucene/lucene-core    {:mvn/version "8.2.0"}
              org.apache.lucene/lucene-monitor {:mvn/version "8.2.0"}
-             cheshire                         {:mvn/version "5.9.0"}
-             prismatic/schema                 {:mvn/version "1.1.11"}}
+             cheshire                         {:mvn/version "5.9.0"}}
  :paths     ["src" "resources"]
  :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
              "clojars" {:url "https://repo.clojars.org/"}}
  :aliases   {:dev
-             {:extra-deps {org.jsoup/jsoup {:mvn/version "1.11.3"}}}
+             {:extra-deps {org.jsoup/jsoup        {:mvn/version "1.11.3"}
+                           org.clojure/test.check {:mvn/version "0.9.0"}}}
              :clj-kondo
              {:main-opts  ["-m" "clj-kondo.main --lint src test"]
               :extra-deps {clj-kondo {:mvn/version "2019.07.31-alpha"}}
@@ -18,7 +18,8 @@
              {:extra-paths ["test"]
               :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                        :sha     "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}
-                            org.jsoup/jsoup           {:mvn/version "1.11.3"}}
+                            org.jsoup/jsoup           {:mvn/version "1.11.3"}
+                            org.clojure/test.check    {:mvn/version "0.9.0"}}
               :main-opts   ["-m" "cognitect.test-runner"]}
              :graal-dictionary-validator
              {:extra-deps {luchiniatwork/cambada {:git/url    "https://github.com/xfthhxk/cambada"

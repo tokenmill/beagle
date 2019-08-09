@@ -2,26 +2,6 @@ stages:
   - dictionary-validator-publish
   - test
 
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_HOST: tcp://docker:2375/
-
-publish-dictionary-validator-docker:
-  stage: dictionary-validator-publish
-  image: docker:stable
-  only:
-    changes:
-      - Dockerfile
-  when: manual
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN registry.gitlab.com
-  script:
-    - docker build --target validator -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2 .
-    - docker push registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
-    - docker rmi registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
-
 lint:
   stage: test
   image: borkdude/clj-kondo
@@ -35,13 +15,13 @@ unit-test:
   script:
     - clojure -A:test
 
-graal-validate-dictionaries:
+validate-sample-dictionaries:
   stage: test
   when: always
-  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
+  image: clojure:tools-deps-alpine
   script:
     - >
-      dictionary-validator
+      clojure -m beagle.validator
       test/resources/dict.csv csv
       test/resources/dict.json json
       test/resources/dict.edn edn

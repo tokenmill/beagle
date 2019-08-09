@@ -1,5 +1,5 @@
 (ns beagle.dictionary-optimization-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is]]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.phrases :as annotations]
             [beagle.text-analysis :as text-analysis]))

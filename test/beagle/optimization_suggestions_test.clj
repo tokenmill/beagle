@@ -1,5 +1,5 @@
 (ns beagle.optimization-suggestions-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest is testing]]
             [beagle.dictionary-optimizer :as optimizer]))
 
 (deftest optimization-suggestions
