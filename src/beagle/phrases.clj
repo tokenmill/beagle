@@ -14,7 +14,7 @@
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
                                       MonitorQuerySerializer HighlightsMatch$Hit)
-           (org.apache.lucene.search PhraseQuery)
+           (org.apache.lucene.search PhraseQuery MatchAllDocsQuery)
            (org.apache.lucene.util BytesRef)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
@@ -94,23 +94,23 @@
 (defn prepare-monitor [monitor dict-entries text-analysis-resources]
   (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries text-analysis-resources)))
 
+(def monitor-query-serializer
+  (reify MonitorQuerySerializer
+    (serialize [_ query]
+      (BytesRef.
+        (str {:query-id (.getId query)
+              :query    (.getQueryString query)
+              :metadata (.getMetadata query)})))
+    (deserialize [_ binary-value]
+      (let [dq (edn/read (PushbackReader. (io/reader (.bytes binary-value))))]
+        (MonitorQuery. (:query-id dq)
+                       (MatchAllDocsQuery.)
+                       (:query dq)
+                       (:metadata dq))))))
+
 (defn create-monitor [analysis-conf text-analysis-resources]
   (let [^MonitorConfiguration config (MonitorConfiguration.)]
-    (.setIndexPath config nil
-                   (reify MonitorQuerySerializer
-                     (serialize [_ query]
-                       (BytesRef.
-                         (str {:query-id (.getId query)
-                               :query    (.getQueryString query)
-                               :metadata (.getMetadata query)})))
-                     (deserialize [_ binary-value]
-                       (let [dq (edn/read (PushbackReader. (io/reader (.bytes binary-value))))]
-                         (MonitorQuery. (:query-id dq)
-                                        (PhraseQuery. "field" (phrase->strings (assoc analysis-conf
-                                                                                 :text (:query dq))
-                                                                               text-analysis-resources))
-                                        (:query dq)
-                                        (:metadata dq))))))
+    (.setIndexPath config nil monitor-query-serializer)
     (Monitor. (text-analysis/get-string-analyzer analysis-conf text-analysis-resources) config)))
 
 (defn setup-monitors [dictionary text-analysis-resources]
