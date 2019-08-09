@@ -1,9 +1,23 @@
 (ns beagle.phrases-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
+            [clojure.spec.test.alpha :as stest]
             [beagle.phrases :as phrases]
             [beagle.schema :as schema]
             [beagle.text-analysis :as text-analysis]))
+
+(s/def ::opts (s/* (s/cat :opt keyword? :val any?)))
+
+(s/fdef phrases/annotator
+        :args (s/cat :dictionary ::schema/dictionary
+                     :kwargs (s/* (s/cat :opt keyword? :val any?)))
+        :ret (s/fspec :args (s/cat :text string?
+                                  :kwargs (s/* (s/cat :opt keyword? :val any?)))
+                     :ret ::schema/annotations))
+
+(stest/instrument`phrases/annotator)
+
+(s/exercise-fn `phrases/annotator)
 
 (def label "LABEL")
 

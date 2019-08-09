@@ -1,13 +1,21 @@
 (ns beagle.schema
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s]
+            [clojure.test.check.generators :as gen]
+            [clojure.string :as str]))
 
-(s/def ::text string?)
+(s/def ::non-empty-string
+  (s/and string? (complement str/blank?)))
+
+(s/def ::text ::non-empty-string)
 (s/def ::type string?)
 (s/def ::id string?)
-(s/def ::synonyms (s/coll-of string?))
+(s/def ::synonyms (s/coll-of ::non-empty-string))
 (s/def ::case-sensitive? boolean?)
 (s/def ::ascii-fold? boolean?)
-(s/def ::meta (s/map-of #(or (string? %) (keyword? %)) string?))
+(s/def ::meta
+  (s/with-gen
+    (s/map-of #(or (string? %) (keyword? %)) string?)
+    #(gen/fmap (fn [s] {s s}) (s/gen string?))))
 
 (s/def ::dict-entry
   (s/keys :req-un [::text]
@@ -18,7 +26,7 @@
 
 (s/def ::begin-offset pos-int?)
 (s/def ::end-offset pos-int?)
-(s/def ::dict-entry-id string?)
+(s/def ::dict-entry-id ::non-empty-string)
 
 (s/def ::dictionary-annotation
   (s/keys :req-un [::text ::type ::begin-offset ::end-offset]
