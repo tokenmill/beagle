@@ -2,13 +2,12 @@
   (:gen-class)
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
-            [clojure.edn :as edn]
+            [jsonista.core :as json]
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
-           (java.io PushbackReader)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
@@ -98,15 +97,16 @@
   (reify MonitorQuerySerializer
     (serialize [_ query]
       (BytesRef.
-        (str {:query-id (.getId query)
-              :query    (.getQueryString query)
-              :metadata (.getMetadata query)})))
+        (json/write-value-as-string
+          {"query-id" (.getId query)
+           "query"    (.getQueryString query)
+           "metadata" (.getMetadata query)})))
     (deserialize [_ binary-value]
-      (let [dq (edn/read (PushbackReader. (io/reader (.bytes binary-value))))]
-        (MonitorQuery. (:query-id dq)
+      (let [dq (json/read-value (io/reader (.bytes ^BytesRef binary-value)))]
+        (MonitorQuery. (get dq "query-id")
                        (MatchAllDocsQuery.)
-                       (:query dq)
-                       (:metadata dq))))))
+                       (get dq "query")
+                       (get dq "metadata"))))))
 
 (defn create-monitor [analysis-conf text-analysis-resources]
   (let [^MonitorConfiguration config (MonitorConfiguration.)]
