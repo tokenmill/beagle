@@ -21,7 +21,7 @@ graal-validate-dictionaries:
   image: clojure:tools-deps-alpine
   script:
     - >
-      clj -m beagle.validator
+      clojure -m beagle.validator
       test/resources/dict.csv csv
       test/resources/dict.json json
       test/resources/dict.edn edn
