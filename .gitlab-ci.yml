@@ -15,7 +15,7 @@ unit-test:
   script:
     - clojure -A:test
 
-graal-validate-dictionaries:
+validate-sample-dictionaries:
   stage: test
   when: always
   image: clojure:tools-deps-alpine
