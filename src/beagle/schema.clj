@@ -1,6 +1,6 @@
 (ns beagle.schema
   (:require [clojure.spec.alpha :as s]
-            [clojure.test.check.generators :as gen]
+            [clojure.spec.gen.alpha :as gen]
             [clojure.string :as str]))
 
 (s/def ::non-empty-string
