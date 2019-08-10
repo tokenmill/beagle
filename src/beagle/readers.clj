@@ -3,8 +3,10 @@
             [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.data.csv :as csv]
-            [cheshire.core :as json])
+            [jsonista.core :as json])
   (:import (java.io PushbackReader)))
+
+(def mapper (json/object-mapper {:decode-key-fn true}))
 
 (defn read-edn
   "Reads dictionary from the source.
@@ -45,4 +47,4 @@
 
 (defn read-json [source]
   (with-open [rdr (io/reader (io/input-stream source))]
-    (doall (json/decode-stream rdr true))))
+    (doall (json/read-value rdr mapper))))

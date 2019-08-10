@@ -2,19 +2,18 @@
   (:gen-class)
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
-            [clojure.edn :as edn]
+            [jsonista.core :as json]
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
-           (java.io PushbackReader)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
                                       MonitorQuerySerializer HighlightsMatch$Hit)
-           (org.apache.lucene.search PhraseQuery)
+           (org.apache.lucene.search PhraseQuery MatchAllDocsQuery)
            (org.apache.lucene.util BytesRef)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
@@ -94,23 +93,24 @@
 (defn prepare-monitor [monitor dict-entries text-analysis-resources]
   (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries text-analysis-resources)))
 
+(def monitor-query-serializer
+  (reify MonitorQuerySerializer
+    (serialize [_ query]
+      (BytesRef.
+        (json/write-value-as-string
+          {"query-id" (.getId query)
+           "query"    (.getQueryString query)
+           "metadata" (.getMetadata query)})))
+    (deserialize [_ binary-value]
+      (let [dq (json/read-value (io/reader (.bytes ^BytesRef binary-value)))]
+        (MonitorQuery. (get dq "query-id")
+                       (MatchAllDocsQuery.)
+                       (get dq "query")
+                       (get dq "metadata"))))))
+
 (defn create-monitor [analysis-conf text-analysis-resources]
   (let [^MonitorConfiguration config (MonitorConfiguration.)]
-    (.setIndexPath config nil
-                   (reify MonitorQuerySerializer
-                     (serialize [_ query]
-                       (BytesRef.
-                         (str {:query-id (.getId query)
-                               :query    (.getQueryString query)
-                               :metadata (.getMetadata query)})))
-                     (deserialize [_ binary-value]
-                       (let [dq (edn/read (PushbackReader. (io/reader (.bytes binary-value))))]
-                         (MonitorQuery. (:query-id dq)
-                                        (PhraseQuery. "field" (phrase->strings (assoc analysis-conf
-                                                                                 :text (:query dq))
-                                                                               text-analysis-resources))
-                                        (:query dq)
-                                        (:metadata dq))))))
+    (.setIndexPath config nil monitor-query-serializer)
     (Monitor. (text-analysis/get-string-analyzer analysis-conf text-analysis-resources) config)))
 
 (defn setup-monitors [dictionary text-analysis-resources]
