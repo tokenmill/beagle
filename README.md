@@ -1,6 +1,6 @@
 # beagle
 
-The detector of interesting things in the text. The intended use is in the stream search applications. 
+The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
 Implementation is based on [Lucene monitor](https://github.com/apache/lucene-solr/tree/master/lucene/monitor) which is based on [Luwak](https://github.com/flaxsearch/luwak).
 ## Components
