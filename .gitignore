@@ -1,4 +1,3 @@
-pom.xml
 pom.xml.asc
 *.jar
 *.class
@@ -12,10 +11,8 @@ pom.xml.asc
 .lein-failures
 .nrepl-port
 .cpcache/
-pom.xml
 target/*
 .idea
-.eastwood
 *.iml
 .env
 *.json
