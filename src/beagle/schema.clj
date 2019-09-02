@@ -12,6 +12,8 @@
 (s/def ::synonyms (s/coll-of ::non-empty-string))
 (s/def ::case-sensitive? boolean?)
 (s/def ::ascii-fold? boolean?)
+(s/def ::stem? boolean)
+(s/def ::stemmer keyword?)
 (s/def ::meta
   (s/with-gen
     (s/map-of #(or (string? %) (keyword? %)) string?)
@@ -20,7 +22,7 @@
 (s/def ::dict-entry
   (s/keys :req-un [::text]
           :opt-un [::type ::id ::synonyms ::meta
-                   ::case-sensitive? ::ascii-fold?]))
+                   ::case-sensitive? ::ascii-fold? ::stem?]))
 
 (s/def ::dictionary (s/coll-of ::dict-entry))
 

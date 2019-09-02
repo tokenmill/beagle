@@ -12,8 +12,8 @@
         :args (s/cat :dictionary ::schema/dictionary
                      :kwargs (s/* (s/cat :opt keyword? :val any?)))
         :ret (s/fspec :args (s/cat :text string?
-                                  :kwargs (s/* (s/cat :opt keyword? :val any?)))
-                     :ret ::schema/annotations))
+                                   :kwargs (s/* (s/cat :opt keyword? :val any?)))
+                      :ret ::schema/annotations))
 
 (stest/instrument`phrases/annotator)
 
@@ -191,7 +191,7 @@
     (is (= 2 (count anns)))))
 
 (deftest monitors-setup
-  (let [text-analysis-resources (text-analysis/analyzers :standard)]
+  (let [text-analysis-resources {:tokenizer :standard}]
     (let [dictionary [{:text "test phrase test"}]
           monitors (phrases/setup-monitors dictionary text-analysis-resources)]
       (is (= #{#{}} (set (map text-analysis/conf->analyzers dictionary))))
@@ -237,3 +237,20 @@
       (is (= 4 (count (phrases/setup-monitors
                         dictionary
                         text-analysis-resources)))))))
+
+(deftest lt-stemming
+  (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn "Kauno miestas")]
+    (is (seq anns))
+    (is (= "Kauno" (-> anns first :text))))
+  (let [dictionary [{:text "Kaunas Vilnius" :id "1" :stem? true}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn "Kaunas, Vilnius")]
+    (is (seq anns))
+    (is (= "Kaunas, Vilnius" (-> anns first :text))))
+  (let [dictionary [{:text "Kaunas" :id "1" :case-sensitive? false :stem? true :stemmer :lithuanian}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn "kauno miestas")]
+    (is (seq anns))
+    (is (= "kauno" (-> anns first :text)))))

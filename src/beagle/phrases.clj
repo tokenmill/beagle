@@ -136,14 +136,14 @@
   (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        text-analysis-resources (text-analysis/analyzers tokenizer)
-        monitors (setup-monitors dictionary text-analysis-resources)]
+        default-analysis-conf {:tokenizer tokenizer}
+        monitors (setup-monitors dictionary default-analysis-conf)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
         (let [annotations (map post-process
                                (mapcat (fn [{:keys [monitor analysis-conf]}]
-                                         (annotate-text text monitor analysis-conf type-name text-analysis-resources)) monitors))]
+                                         (annotate-text text monitor analysis-conf type-name default-analysis-conf)) monitors))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))
