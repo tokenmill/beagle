@@ -8,7 +8,6 @@
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
-           (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
@@ -38,8 +37,8 @@
     (.setStoreTermVectors true)
     (.setStoreTermVectorOffsets true)))
 
-(defn annotate-text [^String text ^Monitor monitor analysis-conf ^String type-name text-analysis-resources]
-  (let [field-name (text-analysis/get-field-name analysis-conf text-analysis-resources)
+(defn annotate-text [^String text ^Monitor monitor analysis-conf ^String type-name default-analysis-conf]
+  (let [field-name (text-analysis/get-field-name analysis-conf default-analysis-conf)
         doc (doto (Document.)
               (.add (Field. ^String field-name text field-type)))
         matches (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))]
@@ -60,38 +59,31 @@
     (catch Exception e
       (.printStackTrace e))))
 
-(defn phrase->strings [dict-entry text-analysis-resources]
-  (let [analyzer (text-analysis/get-string-analyzer dict-entry text-analysis-resources)
-        token-stream (.tokenStream analyzer "not-important" ^String (:text dict-entry))
-        ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
-    (.reset token-stream)
-    (into-array String (reduce (fn [acc _]
-                                 (if (.incrementToken token-stream)
-                                   (conj acc (.toString termAtt))
-                                   (do
-                                     (.close token-stream)
-                                     (reduced acc)))) [] (range)))))
+(defn phrase->strings [dict-entry default-analysis-conf]
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
+    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
-(defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} text-analysis-resources idx]
+(defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
         metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
     (MonitorQuery. query-id
-                   (PhraseQuery. (text-analysis/get-field-name dict-entry text-analysis-resources)
-                                 (phrase->strings dict-entry text-analysis-resources))
+                   (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
+                                 (phrase->strings dict-entry default-analysis-conf))
                    text
                    metadata)))
 
-(defn dict-entries->monitor-queries [dict-entries text-analysis-resources]
+(defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
   (flatten
     (map (fn [{id :id :as dict-entry} idx]
            (let [query-id (or id (str idx))]
              (cons
-               (dict-entry->monitor-query dict-entry text-analysis-resources idx)
-               (map #(dict-entry->monitor-query % text-analysis-resources nil) (prepare-synonyms query-id dict-entry)))))
+               (dict-entry->monitor-query dict-entry default-analysis-conf idx)
+               (map #(dict-entry->monitor-query % default-analysis-conf nil)
+                    (prepare-synonyms query-id dict-entry)))))
          dict-entries (range))))
 
-(defn prepare-monitor [monitor dict-entries text-analysis-resources]
-  (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries text-analysis-resources)))
+(defn prepare-monitor [monitor dict-entries default-analysis-conf]
+  (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries default-analysis-conf)))
 
 (def monitor-query-serializer
   (reify MonitorQuerySerializer
@@ -108,16 +100,16 @@
                        (get dq "query")
                        (get dq "metadata"))))))
 
-(defn create-monitor [analysis-conf text-analysis-resources]
+(defn create-monitor [analysis-conf default-analysis-conf]
   (let [^MonitorConfiguration config (MonitorConfiguration.)]
     (.setIndexPath config nil monitor-query-serializer)
-    (Monitor. (text-analysis/get-string-analyzer analysis-conf text-analysis-resources) config)))
+    (Monitor. (text-analysis/get-string-analyzer analysis-conf default-analysis-conf) config)))
 
-(defn setup-monitors [dictionary text-analysis-resources]
+(defn setup-monitors [dictionary default-analysis-conf]
   (reduce-kv (fn [acc _ v]
                (let [analysis-conf (select-keys (first v) text-analysis/analysis-keys)
-                     monitor (create-monitor analysis-conf text-analysis-resources)]
-                 (prepare-monitor monitor v text-analysis-resources)
+                     monitor (create-monitor analysis-conf default-analysis-conf)]
+                 (prepare-monitor monitor v default-analysis-conf)
                  (conj acc {:analysis-conf analysis-conf :monitor monitor})))
              [] (group-by text-analysis/conf->analyzers dictionary)))
 
@@ -145,14 +137,16 @@
   (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        text-analysis-resources (text-analysis/analyzers tokenizer)
-        monitors (setup-monitors dictionary text-analysis-resources)]
+        default-analysis-conf {:tokenizer tokenizer}
+        monitors (setup-monitors dictionary default-analysis-conf)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
         (let [annotations (map post-process
                                (mapcat (fn [{:keys [monitor analysis-conf]}]
-                                         (annotate-text text monitor analysis-conf type-name text-analysis-resources)) monitors))]
+                                         (annotate-text text monitor analysis-conf
+                                                        type-name default-analysis-conf))
+                                       monitors))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))

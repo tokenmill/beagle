@@ -34,6 +34,11 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
       annotator (phrases/annotator dictionary :type-name "LABEL")]
   (annotator "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
+;; Stemming support for multiple languages
+(let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
+        annotator-fn (phrases/annotator dictionary)]
+  (annotator-fn "Kauno miestas"))
+=> ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
 ```
 
 ## Dictionary readers
