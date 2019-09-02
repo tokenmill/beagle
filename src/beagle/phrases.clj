@@ -8,7 +8,6 @@
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
-           (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
@@ -61,16 +60,8 @@
       (.printStackTrace e))))
 
 (defn phrase->strings [dict-entry text-analysis-resources]
-  (let [analyzer (text-analysis/get-string-analyzer dict-entry text-analysis-resources)
-        token-stream (.tokenStream analyzer "not-important" ^String (:text dict-entry))
-        ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
-    (.reset token-stream)
-    (into-array String (reduce (fn [acc _]
-                                 (if (.incrementToken token-stream)
-                                   (conj acc (.toString termAtt))
-                                   (do
-                                     (.close token-stream)
-                                     (reduced acc)))) [] (range)))))
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry text-analysis-resources)]
+    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
 (defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} text-analysis-resources idx]
   (let [query-id (or id (str idx))

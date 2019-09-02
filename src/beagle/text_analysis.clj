@@ -2,7 +2,8 @@
   (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
-           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)))
+           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
+           (org.apache.lucene.analysis.tokenattributes CharTermAttribute)))
 
 (def analysis-keys [:ascii-fold? :case-sensitive?])
 
@@ -46,3 +47,16 @@
 
 (defn ^String get-field-name [analysis-conf text-analysis-resources]
   (get-in text-analysis-resources [(conf->analyzers analysis-conf) :field-name]))
+
+(defn text->token-strings
+  "Given a text and an analyzer returns an array of tokens as strings."
+  [^String text ^Analyzer analyzer]
+  (let [token-stream (.tokenStream analyzer "not-important" text)
+        ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
+    (.reset token-stream)
+    (reduce (fn [acc _]
+              (if (.incrementToken token-stream)
+                (conj acc (.toString termAtt))
+                (do
+                  (.close token-stream)
+                  (reduced acc)))) [] (range))))
