@@ -43,7 +43,7 @@
     :turkish (TurkishStemmer.)
     (do
       (when stemmer-kw
-        (log/debugf "Stemmer '%s' not found! EnglishStemmer is going to be used." stemmer-kw))
+        (log/debugf "Stemmer '%s' not found! EnglishStemmer is used." stemmer-kw))
       (EnglishStemmer.))))
 
 (defn tokenizer [tokenizer-kw]
@@ -53,7 +53,10 @@
     :standard (StandardTokenizer.)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
-    (StandardTokenizer.)))
+    (do
+      (when tokenizer-kw
+        (log/debugf "Tokenizer '%s' not found. StandardTokenizer is used." tokenizer-kw))
+      (StandardTokenizer.))))
 
 (defn analyzer-constructor [{tokenizer-kw    :tokenizer
                              ascii-fold?     :ascii-fold?
