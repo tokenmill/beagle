@@ -101,22 +101,21 @@
 
 (def analysis-keys (keys default-conf))
 
-(defn conf->analyzers [{:keys [ascii-fold? case-sensitive? stem?]
-                        :or   {ascii-fold?     (:ascii-fold? default-conf)
-                               case-sensitive? (:case-sensitive? default-conf)}}]
+(defn conf->analyzers [{:keys [ascii-fold? case-sensitive? stem? stemmer]
+                        :or   {case-sensitive? (:case-sensitive? default-conf)}}]
   (cond-> #{}
           (not case-sensitive?) (conj :lowercase)
           ascii-fold? (conj :ascii-fold)
-          stem? (conj :stem)))
+          stem? (into #{:stem (or stemmer :english)})))
 
-(defn ^Analyzer get-string-analyzer [analysis-conf text-analysis-resources]
-  (analyzer (merge default-conf text-analysis-resources analysis-conf)))
+(defn ^Analyzer get-string-analyzer [analysis-conf default-analysis-conf]
+  (analyzer (merge default-conf default-analysis-conf analysis-conf)))
 
-(defn ^String get-field-name [analysis-conf text-analysis-resources]
-  (field-name (merge default-conf text-analysis-resources analysis-conf)))
+(defn ^String get-field-name [analysis-conf default-analysis-conf]
+  (field-name (merge default-conf default-analysis-conf analysis-conf)))
 
 (defn text->token-strings
-  "Given a text and an analyzer returns an array of tokens as strings."
+  "Given a text and an analyzer returns a list of tokens as strings."
   [^String text ^Analyzer analyzer]
   (let [token-stream (.tokenStream analyzer "not-important" text)
         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]

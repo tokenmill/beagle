@@ -275,3 +275,11 @@
          annotator-fn (phrases/annotator dictionary)
          anns (annotator-fn txt)]
      (is (empty? anns)))))
+
+(deftest mixed-stemmers
+  (let [txt "Saboniai plays basketball"
+        dictionary [{:text "Sabonis" :id "1" :stem? true :stemmer :lithuanian}
+                    {:text "play" :id "2" :stem? true :stemmer :english}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (= 2 (count anns)))))
