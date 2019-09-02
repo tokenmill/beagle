@@ -254,3 +254,24 @@
         anns (annotator-fn "kauno miestas")]
     (is (seq anns))
     (is (= "kauno" (-> anns first :text)))))
+
+(deftest en-stemming
+  (let [txt "who let the dogs out?"]
+   (let [dictionary [{:text "dog" :id "1"}]
+         annotator-fn (phrases/annotator dictionary)
+         anns (annotator-fn txt)]
+     (is (empty? anns)))
+   (let [dictionary [{:text "dog" :id "1" :stem? true}]
+         annotator-fn (phrases/annotator dictionary)
+         anns (annotator-fn txt)]
+     (is (seq anns))
+     (is (= "dogs" (-> anns first :text))))
+   (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :english}]
+         annotator-fn (phrases/annotator dictionary)
+         anns (annotator-fn txt)]
+     (is (seq anns))
+     (is (= "dogs" (-> anns first :text))))
+   (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :estonian}]
+         annotator-fn (phrases/annotator dictionary)
+         anns (annotator-fn txt)]
+     (is (empty? anns)))))

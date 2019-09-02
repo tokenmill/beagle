@@ -1,5 +1,6 @@
 (ns beagle.text-analysis
-  (:require [clojure.string :as string])
+  (:require [clojure.string :as string]
+            [clojure.tools.logging :as log])
   (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenFilter)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
@@ -40,7 +41,10 @@
     :spanish (SpanishStemmer.)
     :swedish (SwedishStemmer.)
     :turkish (TurkishStemmer.)
-    (EnglishStemmer.)))
+    (do
+      (when stemmer-kw
+        (log/debugf "Stemmer '%s' not found! EnglishStemmer is going to be used." stemmer-kw))
+      (EnglishStemmer.))))
 
 (defn tokenizer [tokenizer-kw]
   (case tokenizer-kw
