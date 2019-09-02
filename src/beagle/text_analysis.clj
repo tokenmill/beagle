@@ -1,7 +1,7 @@
 (ns beagle.text-analysis
   (:require [clojure.string :as string])
   (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenFilter)
-           (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer)
+           (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
@@ -44,7 +44,10 @@
 
 (defn tokenizer [tokenizer-kw]
   (case tokenizer-kw
+    :keyword (KeywordTokenizer.)
+    :letter (LetterTokenizer.)
     :standard (StandardTokenizer.)
+    :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
     (StandardTokenizer.)))
 
