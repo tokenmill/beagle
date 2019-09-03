@@ -5,7 +5,7 @@
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
-Implementation is based on [Lucene monitor](https://github.com/apache/lucene-solr/tree/master/lucene/monitor) which is based on [Luwak](https://github.com/flaxsearch/luwak).
+Implementation is based on [Lucene monitor](https://github.com/apache/lucene-solr/tree/master/lucene/monitor) library which is based on [Luwak](https://github.com/flaxsearch/luwak).
 
 ## Components
 
@@ -161,3 +161,9 @@ Examples:
 Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
 => ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
 ```
+
+## License
+
+Copyright (c) 2019 [TokenMill UAB](http://www.tokenmill.lt)
+
+Distributed under the The Apache License, Version 2.0
