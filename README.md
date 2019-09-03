@@ -4,8 +4,9 @@
 
 # beagle
 
-[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
+[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
