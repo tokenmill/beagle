@@ -1,3 +1,7 @@
+<a href="http://www.tokenmill.lt">
+      <img src="./github/tokenmill-logo.svg" width="125" height="125" align="right" />
+</a>
+
 # beagle
 
 [![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
