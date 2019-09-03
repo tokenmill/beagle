@@ -169,6 +169,6 @@ Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-off
 
 ## License
 
-Copyright (c) 2019 [TokenMill UAB](http://www.tokenmill.lt)
+Copyright &copy; 2019 [TokenMill UAB](http://www.tokenmill.lt)
 
 Distributed under the The Apache License, Version 2.0
