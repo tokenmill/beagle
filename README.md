@@ -1,7 +1,12 @@
+<a href="http://www.tokenmill.lt">
+      <img src=".github/tokenmill-logo.svg" width="125" height="125" align="right" />
+</a>
+
 # beagle
 
-[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
+[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
@@ -164,6 +169,6 @@ Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-off
 
 ## License
 
-Copyright (c) 2019 [TokenMill UAB](http://www.tokenmill.lt)
+Copyright &copy; 2019 [TokenMill UAB](http://www.tokenmill.lt).
 
-Distributed under the The Apache License, Version 2.0
+Distributed under the The Apache License, Version 2.0.
