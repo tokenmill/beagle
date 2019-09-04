@@ -13,7 +13,8 @@
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
                                       MonitorQuerySerializer HighlightsMatch$Hit)
            (org.apache.lucene.search PhraseQuery MatchAllDocsQuery)
-           (org.apache.lucene.util BytesRef)))
+           (org.apache.lucene.util BytesRef)
+           (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
   (mapcat
@@ -37,12 +38,12 @@
     (.setStoreTermVectors true)
     (.setStoreTermVectorOffsets true)))
 
-(defn annotate-text [^String text ^Monitor monitor analysis-conf ^String type-name default-analysis-conf]
-  (let [field-name (text-analysis/get-field-name analysis-conf default-analysis-conf)
-        doc (doto (Document.)
-              (.add (Field. ^String field-name text field-type)))
-        matches (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))]
-    (mapcat #(match->annotation (.get doc field-name) monitor type-name %) matches)))
+(defn annotate-text [^String text ^Monitor monitor field-names ^String type-name]
+  (let [doc (Document.)]
+    (doseq [field-name field-names]
+      (.add doc (Field. ^String field-name text field-type)))
+    (mapcat #(match->annotation text monitor type-name %)
+            (.getMatches (.match monitor doc (HighlightsMatch/MATCHER))))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]
@@ -100,18 +101,32 @@
                        (get dq "query")
                        (get dq "metadata"))))))
 
-(defn create-monitor [analysis-conf default-analysis-conf]
-  (let [^MonitorConfiguration config (MonitorConfiguration.)]
+(defn create-monitor [field-names-w-analyzers]
+  (let [^MonitorConfiguration config (MonitorConfiguration.)
+        per-field-analyzers (PerFieldAnalyzerWrapper.
+                              (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
     (.setIndexPath config nil monitor-query-serializer)
-    (Monitor. (text-analysis/get-string-analyzer analysis-conf default-analysis-conf) config)))
+    (Monitor. per-field-analyzers config)))
 
-(defn setup-monitors [dictionary default-analysis-conf]
-  (reduce-kv (fn [acc _ v]
-               (let [analysis-conf (select-keys (first v) text-analysis/analysis-keys)
-                     monitor (create-monitor analysis-conf default-analysis-conf)]
-                 (prepare-monitor monitor v default-analysis-conf)
-                 (conj acc {:analysis-conf analysis-conf :monitor monitor})))
-             [] (group-by text-analysis/conf->analyzers dictionary)))
+(defn field-name-analyzer-mappings
+  "Creates a map with field names as keys and Lucene analyzers as values.
+  Both field name and analyzer are decided based on the dictionary entry configuration.
+  First group dictionary entries by field name. Then from every group of dictionary entries
+  take the first entry and create an analyzer based on analysis configuration."
+  [dictionary default-analysis-conf]
+  (reduce (fn [acc [k v]]
+            (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
+          {}
+          (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary)))
+
+(defn setup-monitor
+  "Setups the monitor with all the dictionary entries."
+  [dictionary default-analysis-conf]
+  (let [mappings-from-field-names-to-analyzers (field-name-analyzer-mappings dictionary default-analysis-conf)
+        monitor (create-monitor mappings-from-field-names-to-analyzers)]
+    (prepare-monitor monitor dictionary default-analysis-conf)
+    {:monitor     monitor
+     :field-names (keys mappings-from-field-names-to-analyzers)}))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
@@ -137,16 +152,11 @@
   (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        default-analysis-conf {:tokenizer tokenizer}
-        monitors (setup-monitors dictionary default-analysis-conf)]
+        {:keys [monitor field-names]} (setup-monitor dictionary {:tokenizer tokenizer})]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
-        (let [annotations (map post-process
-                               (mapcat (fn [{:keys [monitor analysis-conf]}]
-                                         (annotate-text text monitor analysis-conf
-                                                        type-name default-analysis-conf))
-                                       monitors))]
+        (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))

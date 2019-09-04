@@ -3,8 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]
             [beagle.phrases :as phrases]
-            [beagle.schema :as schema]
-            [beagle.text-analysis :as text-analysis]))
+            [beagle.schema :as schema]))
 
 (s/def ::opts (s/* (s/cat :opt keyword? :val any?)))
 
@@ -189,54 +188,6 @@
         annotator (phrases/annotator dictionary :tokenizer :whitespace)
         anns (annotator "start test phrase test phrase test end")]
     (is (= 2 (count anns)))))
-
-(deftest monitors-setup
-  (let [text-analysis-resources {:tokenizer :standard}]
-    (let [dictionary [{:text "test phrase test"}]
-          monitors (phrases/setup-monitors dictionary text-analysis-resources)]
-      (is (= #{#{}} (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 1 (count monitors))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test" :case-sensitive? false}]]
-      (is (= #{#{} #{:lowercase}}
-             (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 2 (count (phrases/setup-monitors
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test" :ascii-fold? true}]]
-      (is (= #{#{} #{:ascii-fold}}
-             (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 2 (count (phrases/setup-monitors
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test"
-                       :ascii-fold? false
-                       :case-sensitive? false}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? true}]]
-      (is (= #{#{} #{:lowercase} #{:ascii-fold}}
-             (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 3 (count (phrases/setup-monitors
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test"
-                       :ascii-fold? false
-                       :case-sensitive? false}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? true}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? false}]]
-      (is (= #{#{} #{:lowercase} #{:ascii-fold} #{:ascii-fold :lowercase}}
-             (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 4 (count (phrases/setup-monitors
-                        dictionary
-                        text-analysis-resources)))))))
 
 (deftest lt-stemming
   (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]

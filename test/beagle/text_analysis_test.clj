@@ -2,24 +2,45 @@
   (:require [clojure.test :refer [deftest is]]
             [beagle.text-analysis :as text-analysis]))
 
-(deftest conf-analysis
-  (is (= #{} (text-analysis/conf->analyzers {})))
-  (is (= #{:lowercase} (text-analysis/conf->analyzers {:case-sensitive? false})))
-  (is (= #{} (text-analysis/conf->analyzers {:case-sensitive? true})))
-  (is (= #{:ascii-fold} (text-analysis/conf->analyzers {:ascii-fold? true})))
-  (is (= #{} (text-analysis/conf->analyzers {:ascii-fold? false})))
-  (is (= #{:stem :english} (text-analysis/conf->analyzers {:stem? true})))
-  (is (= #{} (text-analysis/conf->analyzers {:stem? false})))
-  (is (= #{:ascii-fold :lowercase}
-         (text-analysis/conf->analyzers {:case-sensitive? false
-                                         :ascii-fold? true})))
-  (is (= #{:ascii-fold}
-         (text-analysis/conf->analyzers {:case-sensitive? true
-                                         :ascii-fold? true})))
-  (is (= #{:stem :english :ascii-fold}
-         (text-analysis/conf->analyzers {:stem? true
-                                         :ascii-fold? true})))
-  (is (= #{:stem :english :ascii-fold :lowercase}
-         (text-analysis/conf->analyzers {:stem? true
-                                         :case-sensitive? false
-                                         :ascii-fold? true}))))
+(deftest field-name-construction
+  (is (= "text.standard-tokenizer"
+         (text-analysis/get-field-name {} {})))
+  (is (= "text.standard-tokenizer"
+         (text-analysis/get-field-name {:case-sensitive? true} {})))
+  (is (= "text.standard-tokenizer.lowercased"
+         (text-analysis/get-field-name {:case-sensitive? false} {})))
+  (is (= "text.standard-tokenizer.ascii-folded"
+         (text-analysis/get-field-name {:ascii-fold? true} {})))
+  (is (= "text.standard-tokenizer.stemmed-english"
+         (text-analysis/get-field-name {:stem? true} {})))
+  (is (= "text.standard-tokenizer.stemmed-lithuanian"
+         (text-analysis/get-field-name {:stem? true :stemmer :lithuanian} {})))
+  (is (= "text.standard-tokenizer.ascii-folded-lowercased-stemmed-lithuanian"
+         (text-analysis/get-field-name {:ascii-fold? true
+                                        :case-sensitive? false
+                                        :stem? true
+                                        :stemmer :lithuanian} {}))))
+
+(deftest token-stream
+  (let [txt "These are tests."]
+    (is (= ["These" "are" "tests"]
+           (text-analysis/text->token-strings
+             txt (text-analysis/get-string-analyzer {:case-sensitive? true} {}))))
+    (is (= ["these" "are" "tests"]
+           (text-analysis/text->token-strings
+             txt (text-analysis/get-string-analyzer {:case-sensitive? false} {}))))
+    (is (= ["these" "are" "tests"]
+           (text-analysis/text->token-strings
+             txt (text-analysis/get-string-analyzer {:case-sensitive? false
+                                                     :ascii-fold? true} {}))))
+    (is (= ["these" "are" "test"]
+           (text-analysis/text->token-strings
+             txt (text-analysis/get-string-analyzer {:case-sensitive? false
+                                                     :ascii-fold? true
+                                                     :stem? true} {}))))
+    ; this one is surprising but correct
+    (is (= ["these" "are" "tests."]
+           (text-analysis/text->token-strings
+             txt (text-analysis/get-string-analyzer {:case-sensitive? false
+                                                     :ascii-fold? true
+                                                     :stem? true} {:tokenizer :whitespace}))))))
