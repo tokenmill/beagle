@@ -108,16 +108,25 @@
     (.setIndexPath config nil monitor-query-serializer)
     (Monitor. per-field-analyzers config)))
 
-(defn setup-monitor [dictionary default-analysis-conf]
-  (let [field-names-w-analyzers
-        (reduce (fn [acc [k v]]
-                  (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
-                {}
-                (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))
-        monitor (create-monitor field-names-w-analyzers)]
+(defn field-name-analyzer-mappings
+  "Creates a map with field names as keys and Lucene analyzers as values.
+  Both field name and analyzer are decided based on the dictionary entry configuration.
+  First group dictionary entries by field name. Then from every group of dictionary entries
+  take the first entry and create an analyzer based on analysis configuration."
+  [dictionary default-analysis-conf]
+  (reduce (fn [acc [k v]]
+            (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
+          {}
+          (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary)))
+
+(defn setup-monitor
+  "Setups the monitor with all the dictionary entries."
+  [dictionary default-analysis-conf]
+  (let [mappings-from-field-names-to-analyzers (field-name-analyzer-mappings dictionary default-analysis-conf)
+        monitor (create-monitor mappings-from-field-names-to-analyzers)]
     (prepare-monitor monitor dictionary default-analysis-conf)
     {:monitor     monitor
-     :field-names (keys field-names-w-analyzers)}))
+     :field-names (keys mappings-from-field-names-to-analyzers)}))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
