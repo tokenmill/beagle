@@ -101,27 +101,21 @@
                        (get dq "query")
                        (get dq "metadata"))))))
 
-(defn create-monitor [field-names-w-analyzers analysis-conf default-analysis-conf]
+(defn create-monitor [field-names-w-analyzers]
   (let [^MonitorConfiguration config (MonitorConfiguration.)
         per-field-analyzers (PerFieldAnalyzerWrapper. (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
     (.setIndexPath config nil monitor-query-serializer)
     (Monitor. per-field-analyzers config)))
 
-(defn setup-monitors [dictionary default-analysis-conf]
+(defn setup-monitor [dictionary default-analysis-conf]
   (let [field-names-w-analyzers (reduce (fn [acc [k v]]
                                           (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
                                         {}
                                         (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))]
-    #_(reduce-kv (fn [acc _ dict-entries]
-                 (let [analysis-conf (select-keys (first dict-entries) text-analysis/analysis-keys)
-                       monitor (create-monitor field-names-w-analyzers analysis-conf default-analysis-conf)]
-                   (prepare-monitor monitor dict-entries default-analysis-conf)
-                   (conj acc {:analysis-conf analysis-conf :monitor monitor})))
-               [] (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))
-    (let [monitor (create-monitor field-names-w-analyzers nil nil)]
+    (let [monitor (create-monitor field-names-w-analyzers)]
       (prepare-monitor monitor dictionary default-analysis-conf)
-      [{:monitor monitor
-        :field-names (keys field-names-w-analyzers)}])))
+      {:monitor     monitor
+       :field-names (keys field-names-w-analyzers)})))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
@@ -147,15 +141,11 @@
   (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
-        default-analysis-conf {:tokenizer tokenizer}
-        monitors (setup-monitors dictionary default-analysis-conf)]
+        {:keys [monitor field-names]} (setup-monitor dictionary {:tokenizer tokenizer})]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
-        (let [annotations (map post-process
-                               (mapcat (fn [{:keys [monitor field-names]}]
-                                         (annotate-text text monitor field-names type-name))
-                                       monitors))]
+        (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))
