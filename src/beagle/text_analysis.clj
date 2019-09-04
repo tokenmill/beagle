@@ -99,11 +99,15 @@
    :stem?           false
    :stemmer         :english})
 
+(def conf-fields (keys default-conf))
+
 (defn ^Analyzer get-string-analyzer [analysis-conf default-analysis-conf]
-  (analyzer (merge default-conf default-analysis-conf analysis-conf)))
+  (analyzer (select-keys (merge default-conf default-analysis-conf analysis-conf)
+                         conf-fields)))
 
 (defn ^String get-field-name [analysis-conf default-analysis-conf]
-  (field-name (merge default-conf default-analysis-conf analysis-conf)))
+  (field-name (select-keys (merge default-conf default-analysis-conf analysis-conf)
+                           conf-fields)))
 
 (defn text->token-strings
   "Given a text and an analyzer returns a list of tokens as strings."
