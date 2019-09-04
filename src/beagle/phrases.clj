@@ -103,15 +103,17 @@
 
 (defn create-monitor [field-names-w-analyzers]
   (let [^MonitorConfiguration config (MonitorConfiguration.)
-        per-field-analyzers (PerFieldAnalyzerWrapper. (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
+        per-field-analyzers (PerFieldAnalyzerWrapper.
+                              (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
     (.setIndexPath config nil monitor-query-serializer)
     (Monitor. per-field-analyzers config)))
 
 (defn setup-monitor [dictionary default-analysis-conf]
-  (let [field-names-w-analyzers (reduce (fn [acc [k v]]
-                                          (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
-                                        {}
-                                        (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))]
+  (let [field-names-w-analyzers
+        (reduce (fn [acc [k v]]
+                  (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
+                {}
+                (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))]
     (let [monitor (create-monitor field-names-w-analyzers)]
       (prepare-monitor monitor dictionary default-analysis-conf)
       {:monitor     monitor

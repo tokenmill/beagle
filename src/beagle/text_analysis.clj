@@ -99,15 +99,6 @@
    :stem?           false
    :stemmer         :english})
 
-(def analysis-keys (keys default-conf))
-
-(defn conf->analyzers [{:keys [ascii-fold? case-sensitive? stem? stemmer]
-                        :or   {case-sensitive? (:case-sensitive? default-conf)}}]
-  (cond-> #{}
-          (not case-sensitive?) (conj :lowercase)
-          ascii-fold? (conj :ascii-fold)
-          stem? (into #{:stem (or stemmer :english)})))
-
 (defn ^Analyzer get-string-analyzer [analysis-conf default-analysis-conf]
   (analyzer (merge default-conf default-analysis-conf analysis-conf)))
 

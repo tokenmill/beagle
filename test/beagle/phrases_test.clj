@@ -3,8 +3,7 @@
             [clojure.spec.alpha :as s]
             [clojure.spec.test.alpha :as stest]
             [beagle.phrases :as phrases]
-            [beagle.schema :as schema]
-            [beagle.text-analysis :as text-analysis]))
+            [beagle.schema :as schema]))
 
 (s/def ::opts (s/* (s/cat :opt keyword? :val any?)))
 
@@ -194,19 +193,14 @@
   (let [text-analysis-resources {:tokenizer :standard}]
     (let [dictionary [{:text "test phrase test"}]
           monitors (phrases/setup-monitor dictionary text-analysis-resources)]
-      (is (= #{#{}} (set (map text-analysis/conf->analyzers dictionary))))
       (is (= 2 (count monitors))))
     (let [dictionary [{:text "test phrase test"}
                       {:text "test phrase test" :case-sensitive? false}]]
-      (is (= #{#{} #{:lowercase}}
-             (set (map text-analysis/conf->analyzers dictionary))))
       (is (= 2 (count (phrases/setup-monitor
                         dictionary
                         text-analysis-resources)))))
     (let [dictionary [{:text "test phrase test"}
                       {:text "test phrase test" :ascii-fold? true}]]
-      (is (= #{#{} #{:ascii-fold}}
-             (set (map text-analysis/conf->analyzers dictionary))))
       (is (= 2 (count (phrases/setup-monitor
                         dictionary
                         text-analysis-resources)))))
@@ -217,8 +211,6 @@
                       {:text "test phrase test"
                        :ascii-fold? true
                        :case-sensitive? true}]]
-      (is (= #{#{} #{:lowercase} #{:ascii-fold}}
-             (set (map text-analysis/conf->analyzers dictionary))))
       (is (= 2 (count (phrases/setup-monitor
                         dictionary
                         text-analysis-resources)))))
@@ -232,8 +224,6 @@
                       {:text "test phrase test"
                        :ascii-fold? true
                        :case-sensitive? false}]]
-      (is (= #{#{} #{:lowercase} #{:ascii-fold} #{:ascii-fold :lowercase}}
-             (set (map text-analysis/conf->analyzers dictionary))))
       (is (= 2 (count (phrases/setup-monitor
                         dictionary
                         text-analysis-resources)))))))
