@@ -200,14 +200,14 @@
                       {:text "test phrase test" :case-sensitive? false}]]
       (is (= #{#{} #{:lowercase}}
              (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 2 (count (phrases/setup-monitors
+      (is (= 1 (count (phrases/setup-monitors
                         dictionary
                         text-analysis-resources)))))
     (let [dictionary [{:text "test phrase test"}
                       {:text "test phrase test" :ascii-fold? true}]]
       (is (= #{#{} #{:ascii-fold}}
              (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 2 (count (phrases/setup-monitors
+      (is (= 1 (count (phrases/setup-monitors
                         dictionary
                         text-analysis-resources)))))
     (let [dictionary [{:text "test phrase test"}
@@ -219,7 +219,7 @@
                        :case-sensitive? true}]]
       (is (= #{#{} #{:lowercase} #{:ascii-fold}}
              (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 3 (count (phrases/setup-monitors
+      (is (= 1 (count (phrases/setup-monitors
                         dictionary
                         text-analysis-resources)))))
     (let [dictionary [{:text "test phrase test"}
@@ -234,7 +234,7 @@
                        :case-sensitive? false}]]
       (is (= #{#{} #{:lowercase} #{:ascii-fold} #{:ascii-fold :lowercase}}
              (set (map text-analysis/conf->analyzers dictionary))))
-      (is (= 4 (count (phrases/setup-monitors
+      (is (= 1 (count (phrases/setup-monitors
                         dictionary
                         text-analysis-resources)))))))
 
