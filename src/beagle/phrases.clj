@@ -113,11 +113,11 @@
         (reduce (fn [acc [k v]]
                   (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
                 {}
-                (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))]
-    (let [monitor (create-monitor field-names-w-analyzers)]
-      (prepare-monitor monitor dictionary default-analysis-conf)
-      {:monitor     monitor
-       :field-names (keys field-names-w-analyzers)})))
+                (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary))
+        monitor (create-monitor field-names-w-analyzers)]
+    (prepare-monitor monitor dictionary default-analysis-conf)
+    {:monitor     monitor
+     :field-names (keys field-names-w-analyzers)}))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
