@@ -38,7 +38,7 @@
     (.setStoreTermVectors true)
     (.setStoreTermVectorOffsets true)))
 
-(defn annotate-text [^String text ^Monitor monitor field-names analysis-conf ^String type-name default-analysis-conf]
+(defn annotate-text [^String text ^Monitor monitor field-names ^String type-name]
   (let [doc (Document.)]
     (doseq [field-name field-names]
       (.add doc (Field. ^String field-name text field-type)))
@@ -121,7 +121,6 @@
     (let [monitor (create-monitor field-names-w-analyzers nil nil)]
       (prepare-monitor monitor dictionary default-analysis-conf)
       [{:monitor monitor
-        :analysis-conf (select-keys (first dictionary) text-analysis/analysis-keys)
         :field-names (keys field-names-w-analyzers)}])))
 
 (defn synonym-annotation? [annotation]
@@ -154,9 +153,8 @@
       (if (s/blank? text)
         []
         (let [annotations (map post-process
-                               (mapcat (fn [{:keys [monitor analysis-conf field-names]}]
-                                         (annotate-text text monitor field-names analysis-conf
-                                                        type-name default-analysis-conf))
+                               (mapcat (fn [{:keys [monitor field-names]}]
+                                         (annotate-text text monitor field-names type-name))
                                        monitors))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
