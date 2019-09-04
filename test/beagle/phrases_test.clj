@@ -189,45 +189,6 @@
         anns (annotator "start test phrase test phrase test end")]
     (is (= 2 (count anns)))))
 
-(deftest monitors-setup
-  (let [text-analysis-resources {:tokenizer :standard}]
-    (let [dictionary [{:text "test phrase test"}]
-          monitors (phrases/setup-monitor dictionary text-analysis-resources)]
-      (is (= 2 (count monitors))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test" :case-sensitive? false}]]
-      (is (= 2 (count (phrases/setup-monitor
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test" :ascii-fold? true}]]
-      (is (= 2 (count (phrases/setup-monitor
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test"
-                       :ascii-fold? false
-                       :case-sensitive? false}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? true}]]
-      (is (= 2 (count (phrases/setup-monitor
-                        dictionary
-                        text-analysis-resources)))))
-    (let [dictionary [{:text "test phrase test"}
-                      {:text "test phrase test"
-                       :ascii-fold? false
-                       :case-sensitive? false}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? true}
-                      {:text "test phrase test"
-                       :ascii-fold? true
-                       :case-sensitive? false}]]
-      (is (= 2 (count (phrases/setup-monitor
-                        dictionary
-                        text-analysis-resources)))))))
-
 (deftest lt-stemming
   (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
         annotator-fn (phrases/annotator dictionary)
