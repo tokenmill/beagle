@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>lt.tokenmill</groupId>
   <artifactId>beagle</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.1.3-SNAPSHOT</version>
   <name>beagle</name>
   <url>https://github.com/tokenmill/beagle</url>
   <dependencies>
