@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>lt.tokenmill</groupId>
   <artifactId>beagle</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5-SNAPSHOT</version>
   <name>beagle</name>
   <url>https://github.com/tokenmill/beagle</url>
   <dependencies>
@@ -46,7 +46,7 @@
     <url>https://github.com/tokenmill/beagle</url>
     <connection>scm:git:git://github.com/tokenmill/beagle.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/tokenmill/beagle.git</developerConnection>
-    <tag>beagle-0.1.4</tag>
+    <tag>16e9d4a23e7dccd4e2b0f41a098d2998dece25a0</tag>
   </scm>
 
   <repositories>
