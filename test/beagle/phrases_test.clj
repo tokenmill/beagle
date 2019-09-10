@@ -236,12 +236,12 @@
     (is (= 2 (count anns)))))
 
 (deftest phrase-slop
-  (let [txt "before start end after"
+  (let [txt "before start and end after"
         dictionary [{:text "start end" :id "1" :slop 1}]
         annotator-fn (phrases/annotator dictionary)
         anns (annotator-fn txt)]
     (is (= 1 (count anns)))
-    (is (= "start end" (:text (first anns)))))
+    (is (= "start and end" (:text (first anns)))))
   (let [txt "before start phrase and end phrase after"
         dictionary [{:text "start phrase end phrase" :id "1" :slop 1}]
         annotator-fn (phrases/annotator dictionary)
