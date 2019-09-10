@@ -6,8 +6,7 @@
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.text-analysis :as text-analysis]
-            [clojure.tools.logging :as log])
+            [beagle.text-analysis :as text-analysis])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
