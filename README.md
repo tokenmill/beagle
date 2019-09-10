@@ -44,6 +44,12 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
         annotator-fn (phrases/annotator dictionary)]
   (annotator-fn "Kauno miestas"))
 => ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
+;; Phrases also support slop (i.e. terms edit distance)
+(let [txt "before start and end after"
+        dictionary [{:text "start end" :id "1" :slop 1}]
+        annotator-fn (phrases/annotator dictionary)]
+  (annotator-fn txt))
+=> ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
 
 ## Dictionary readers

@@ -64,12 +64,16 @@
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
-(defn dict-entry->monitor-query [{:keys [id text meta type] :as dict-entry} default-analysis-conf idx]
+(defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
         metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
     (MonitorQuery. query-id
-                   (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                 (phrase->strings dict-entry default-analysis-conf))
+                   (if slop
+                     (PhraseQuery. slop
+                                   (text-analysis/get-field-name dict-entry default-analysis-conf)
+                                   (phrase->strings dict-entry default-analysis-conf))
+                     (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
+                                   (phrase->strings dict-entry default-analysis-conf)))
                    text
                    metadata)))
 

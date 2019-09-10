@@ -208,24 +208,24 @@
 
 (deftest en-stemming
   (let [txt "who let the dogs out?"]
-   (let [dictionary [{:text "dog" :id "1"}]
-         annotator-fn (phrases/annotator dictionary)
-         anns (annotator-fn txt)]
-     (is (empty? anns)))
-   (let [dictionary [{:text "dog" :id "1" :stem? true}]
-         annotator-fn (phrases/annotator dictionary)
-         anns (annotator-fn txt)]
-     (is (seq anns))
-     (is (= "dogs" (-> anns first :text))))
-   (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :english}]
-         annotator-fn (phrases/annotator dictionary)
-         anns (annotator-fn txt)]
-     (is (seq anns))
-     (is (= "dogs" (-> anns first :text))))
-   (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :estonian}]
-         annotator-fn (phrases/annotator dictionary)
-         anns (annotator-fn txt)]
-     (is (empty? anns)))))
+    (let [dictionary [{:text "dog" :id "1"}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns)))
+    (let [dictionary [{:text "dog" :id "1" :stem? true}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (seq anns))
+      (is (= "dogs" (-> anns first :text))))
+    (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :english}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (seq anns))
+      (is (= "dogs" (-> anns first :text))))
+    (let [dictionary [{:text "dog" :id "1" :stem? true :stemmer :estonian}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns)))))
 
 (deftest mixed-stemmers
   (let [txt "Saboniai plays basketball"
@@ -234,3 +234,41 @@
         annotator-fn (phrases/annotator dictionary)
         anns (annotator-fn txt)]
     (is (= 2 (count anns)))))
+
+(deftest phrase-slop
+  (let [txt "before start and end after"
+        dictionary [{:text "start end" :id "1" :slop 1}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (= 1 (count anns)))
+    (is (= "start and end" (:text (first anns)))))
+  (testing "all terms in the phrase should match"
+    (let [txt "before start end after"
+          dictionary [{:text "start NOPE end" :id "1" :slop 10}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns))))
+  (let [txt "before start phrase and end phrase after"
+        dictionary [{:text "start phrase end phrase" :id "1" :slop 1}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (= 1 (count anns)))
+    (is (= "start phrase and end phrase" (:text (first anns)))))
+  (testing "phrase edit distance"
+    (let [txt "before start end after"
+          dictionary [{:text "end start" :id "1" :slop 0}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns)))
+    (let [txt "before start end after"
+          dictionary [{:text "end start" :id "1" :slop 2}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (= 1 (count anns)))
+      (is (= "start end" (:text (first anns))))))
+  (testing "all terms should match despite the slop"
+    (let [txt "before start end after"
+          dictionary [{:text "end start foo" :id "1" :slop 100}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns)))))
