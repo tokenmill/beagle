@@ -242,6 +242,12 @@
         anns (annotator-fn txt)]
     (is (= 1 (count anns)))
     (is (= "start and end" (:text (first anns)))))
+  (testing "all terms in the phrase should match"
+    (let [txt "before start end after"
+          dictionary [{:text "start NOPE end" :id "1" :slop 10}]
+          annotator-fn (phrases/annotator dictionary)
+          anns (annotator-fn txt)]
+      (is (empty? anns))))
   (let [txt "before start phrase and end phrase after"
         dictionary [{:text "start phrase end phrase" :id "1" :slop 1}]
         annotator-fn (phrases/annotator dictionary)
