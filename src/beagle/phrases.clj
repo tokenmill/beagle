@@ -1,20 +1,15 @@
 (ns beagle.phrases
-  (:gen-class)
   (:require [clojure.string :as s]
-            [clojure.java.io :as io]
-            [jsonista.core :as json]
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
-            [beagle.text-analysis :as text-analysis])
+            [beagle.text-analysis :as text-analysis]
+            [beagle.monitor :as monitor])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
-           (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
-                                      MonitorQuerySerializer HighlightsMatch$Hit)
-           (org.apache.lucene.search PhraseQuery MatchAllDocsQuery)
-           (org.apache.lucene.util BytesRef)
-           (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)))
+           (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch HighlightsMatch$Hit)
+           (org.apache.lucene.search PhraseQuery)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
   (mapcat
@@ -54,12 +49,6 @@
              (update-in [:meta] assoc :synonym? "true" :query-id query-id)))
        synonyms))
 
-(defn save-queries-in-monitor [^Monitor monitor monitor-queries]
-  (try
-    (.register monitor ^Iterable monitor-queries)
-    (catch Exception e
-      (.printStackTrace e))))
-
 (defn phrase->strings [dict-entry default-analysis-conf]
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
@@ -77,7 +66,7 @@
                    text
                    metadata)))
 
-(defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
+(defn dictionary->monitor-queries [dict-entries default-analysis-conf]
   (flatten
     (map (fn [{id :id :as dict-entry} idx]
            (let [query-id (or id (str idx))]
@@ -86,51 +75,6 @@
                (map #(dict-entry->monitor-query % default-analysis-conf nil)
                     (prepare-synonyms query-id dict-entry)))))
          dict-entries (range))))
-
-(defn prepare-monitor [monitor dict-entries default-analysis-conf]
-  (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries default-analysis-conf)))
-
-(def monitor-query-serializer
-  (reify MonitorQuerySerializer
-    (serialize [_ query]
-      (BytesRef.
-        (json/write-value-as-string
-          {"query-id" (.getId query)
-           "query"    (.getQueryString query)
-           "metadata" (.getMetadata query)})))
-    (deserialize [_ binary-value]
-      (let [dq (json/read-value (io/reader (.bytes ^BytesRef binary-value)))]
-        (MonitorQuery. (get dq "query-id")
-                       (MatchAllDocsQuery.)
-                       (get dq "query")
-                       (get dq "metadata"))))))
-
-(defn create-monitor [field-names-w-analyzers]
-  (let [^MonitorConfiguration config (MonitorConfiguration.)
-        per-field-analyzers (PerFieldAnalyzerWrapper.
-                              (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
-    (.setIndexPath config nil monitor-query-serializer)
-    (Monitor. per-field-analyzers config)))
-
-(defn field-name-analyzer-mappings
-  "Creates a map with field names as keys and Lucene analyzers as values.
-  Both field name and analyzer are decided based on the dictionary entry configuration.
-  First group dictionary entries by field name. Then from every group of dictionary entries
-  take the first entry and create an analyzer based on analysis configuration."
-  [dictionary default-analysis-conf]
-  (reduce (fn [acc [k v]]
-            (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
-          {}
-          (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary)))
-
-(defn setup-monitor
-  "Setups the monitor with all the dictionary entries."
-  [dictionary default-analysis-conf]
-  (let [mappings-from-field-names-to-analyzers (field-name-analyzer-mappings dictionary default-analysis-conf)
-        monitor (create-monitor mappings-from-field-names-to-analyzers)]
-    (prepare-monitor monitor dictionary default-analysis-conf)
-    {:monitor     monitor
-     :field-names (keys mappings-from-field-names-to-analyzers)}))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
@@ -155,12 +99,12 @@
   [dictionary & {:keys [type-name validate-dictionary? optimize-dictionary? tokenizer]}]
   (when validate-dictionary? (validator/validate-dictionary dictionary))
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
-        type-name (if (s/blank? type-name) "PHRASE" type-name)
-        {:keys [monitor field-names]} (setup-monitor dictionary {:tokenizer tokenizer})]
+        default-type-name (if (s/blank? type-name) "PHRASE" type-name)
+        {:keys [monitor field-names]} (monitor/setup dictionary {:tokenizer tokenizer} dictionary->monitor-queries)]
     (fn [text & {:keys [merge-annotations?]}]
       (if (s/blank? text)
         []
-        (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
+        (let [annotations (map post-process (annotate-text text monitor field-names default-type-name))]
           (if merge-annotations?
             (merger/merge-same-type-annotations annotations)
             annotations))))))
