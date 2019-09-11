@@ -51,9 +51,9 @@
 
 (defn setup
   "Setups the monitor with all the dictionary entries."
-  [dictionary default-analysis-conf dictionary->monitor-queries-fn]
+  [dictionary default-analysis-conf dict-entry->monitor-queries-fn]
   (let [mappings-from-field-names-to-analyzers (field-name-analyzer-mappings dictionary default-analysis-conf)
         monitor (create mappings-from-field-names-to-analyzers)]
-    (prepare monitor dictionary default-analysis-conf dictionary->monitor-queries-fn)
+    (prepare monitor dictionary default-analysis-conf dict-entry->monitor-queries-fn)
     {:monitor     monitor
      :field-names (keys mappings-from-field-names-to-analyzers)}))

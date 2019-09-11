@@ -66,7 +66,7 @@
                    text
                    metadata)))
 
-(defn dictionary->monitor-queries [dict-entries default-analysis-conf]
+(defn dictionary->monitor-queries [dictionary default-analysis-conf]
   (flatten
     (map (fn [{id :id :as dict-entry} idx]
            (let [query-id (or id (str idx))]
@@ -74,7 +74,7 @@
                (dict-entry->monitor-query dict-entry default-analysis-conf idx)
                (map #(dict-entry->monitor-query % default-analysis-conf nil)
                     (prepare-synonyms query-id dict-entry)))))
-         dict-entries (range))))
+         dictionary (range))))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
