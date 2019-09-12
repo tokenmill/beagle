@@ -8,7 +8,8 @@
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.analysis.snowball SnowballFilter)
            (org.tartarus.snowball.ext LithuanianStemmer ArabicStemmer ArmenianStemmer BasqueStemmer EnglishStemmer CatalanStemmer DanishStemmer DutchStemmer EstonianStemmer FinnishStemmer FrenchStemmer German2Stemmer GermanStemmer HungarianStemmer IrishStemmer ItalianStemmer KpStemmer LovinsStemmer NorwegianStemmer PorterStemmer PortugueseStemmer RomanianStemmer RussianStemmer SpanishStemmer SwedishStemmer TurkishStemmer)
-           (org.tartarus.snowball SnowballProgram)))
+           (org.tartarus.snowball SnowballProgram)
+           (java.io StringReader)))
 
 (defn ^SnowballProgram stemmer
   "Creates a stemmer object given the stemmer keyword.
@@ -112,7 +113,7 @@
 (defn text->token-strings
   "Given a text and an analyzer returns a list of tokens as strings."
   [^String text ^Analyzer analyzer]
-  (let [^TokenStream token-stream (.tokenStream analyzer (str (rand-int 10000)) text)
+  (let [^TokenStream token-stream (.tokenStream analyzer (str (rand-int 10000)) (StringReader. text))
         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
     (.reset token-stream)
     (reduce (fn [acc _]
