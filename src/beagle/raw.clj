@@ -1,7 +1,8 @@
 (ns beagle.raw
   (:require [clojure.string :as s]
             [beagle.monitor :as monitor]
-            [beagle.text-analysis :as text-analysis])
+            [beagle.text-analysis :as text-analysis]
+            [clojure.tools.logging :as log])
   (:import (org.apache.lucene.monitor MonitorQuery QueryMatch Monitor)
            (org.apache.lucene.queryparser.classic QueryParser)
            (org.apache.lucene.document Document Field FieldType)
@@ -42,6 +43,12 @@
          (dict-entry->monitor-queries dict-entry default-analysis-conf idx))
        dictionary (range)))
 
+(defn match-monitor [text monitor field-names type-name opts]
+  (log/debugf "Match monitor with opts='%s'" opts)
+  (if (s/blank? text)
+    []
+    (match-text text monitor field-names type-name)))
+
 (defn annotator
   ([dictionary] (annotator dictionary {}))
   ([dictionary {:keys [type-name tokenizer]}]
@@ -49,7 +56,6 @@
          {:keys [monitor field-names]} (monitor/setup dictionary
                                                       {:tokenizer tokenizer}
                                                       dictionary->monitor-queries)]
-     (fn [text opts]
-       (if (s/blank? text)
-         []
-         (match-text text monitor field-names type-name))))))
+     (fn
+       ([text] (match-monitor text monitor field-names type-name {}))
+       ([text opts] (match-monitor text monitor field-names type-name opts))))))
