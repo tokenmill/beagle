@@ -1,7 +1,8 @@
 (ns beagle.monitor
-  (:require [beagle.text-analysis :as text-analysis]
+  (:require [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [jsonista.core :as json]
-            [clojure.java.io :as io])
+            [beagle.text-analysis :as text-analysis])
   (:import (org.apache.lucene.monitor MonitorConfiguration Monitor MonitorQuerySerializer MonitorQuery)
            (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)
            (org.apache.lucene.util BytesRef)
@@ -29,11 +30,19 @@
     (.setIndexPath config nil monitor-query-serializer)
     (Monitor. per-field-analyzers config)))
 
+(defn defer-to-one-by-one-registration [monitor monitor-queries]
+  (doseq [mq monitor-queries]
+    (try
+      (.register monitor (into-array MonitorQuery [mq]))
+      (catch Exception e
+        (log/errorf "Failed to register query: '%s'" mq)
+        (.printStackTrace e)))))
+
 (defn register-queries [^Monitor monitor monitor-queries]
   (try
     (.register monitor ^Iterable monitor-queries)
-    (catch Exception e
-      (.printStackTrace e))))
+    (catch Exception _
+      (defer-to-one-by-one-registration monitor monitor-queries))))
 
 (defn field-name-analyzer-mappings
   "Creates a map with field names as keys and Lucene analyzers as values.

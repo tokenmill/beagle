@@ -1,5 +1,6 @@
 (ns beagle.phrases
   (:require [clojure.string :as s]
+            [clojure.tools.logging :as log]
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
@@ -8,7 +9,8 @@
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
-           (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch HighlightsMatch$Hit)
+           (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch
+                                      HighlightsMatch$Hit)
            (org.apache.lucene.search PhraseQuery)))
 
 (defn match->annotation [text monitor type-name ^HighlightsMatch match]
@@ -34,11 +36,15 @@
     (.setStoreTermVectorOffsets true)))
 
 (defn annotate-text [^String text ^Monitor monitor field-names ^String type-name]
-  (let [doc (Document.)]
-    (doseq [field-name field-names]
-      (.add doc (Field. ^String field-name text field-type)))
-    (mapcat #(match->annotation text monitor type-name %)
-            (.getMatches (.match monitor doc (HighlightsMatch/MATCHER))))))
+  (try
+    (let [doc (Document.)]
+      (doseq [field-name field-names]
+        (.add doc (Field. ^String field-name text field-type)))
+      (mapcat #(match->annotation text monitor type-name %)
+              (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))))
+    (catch Exception e
+      (log/errorf "Failed to match text: '%s'" text)
+      (.printStackTrace e))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]
@@ -55,26 +61,28 @@
 
 (defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
-        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
-    (MonitorQuery. query-id
-                   (if slop
-                     (PhraseQuery. slop
-                                   (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                   (phrase->strings dict-entry default-analysis-conf))
-                     (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                   (phrase->strings dict-entry default-analysis-conf)))
-                   text
-                   metadata)))
+        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
+        field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
+        strings (phrase->strings dict-entry default-analysis-conf)]
+    (if (seq strings)
+      (MonitorQuery. query-id
+                     (if slop
+                       (PhraseQuery. slop field-name strings)
+                       (PhraseQuery. field-name strings))
+                     text
+                     metadata)
+      (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
 
 (defn dictionary->monitor-queries [dictionary default-analysis-conf]
-  (flatten
-    (map (fn [{id :id :as dict-entry} idx]
-           (let [query-id (or id (str idx))]
-             (cons
-               (dict-entry->monitor-query dict-entry default-analysis-conf idx)
-               (map #(dict-entry->monitor-query % default-analysis-conf nil)
-                    (prepare-synonyms query-id dict-entry)))))
-         dictionary (range))))
+  (->> (map (fn [{id :id :as dict-entry} idx]
+              (let [query-id (or id (str idx))]
+                (cons
+                  (dict-entry->monitor-query dict-entry default-analysis-conf idx)
+                  (map #(dict-entry->monitor-query % default-analysis-conf nil)
+                       (prepare-synonyms query-id dict-entry)))))
+            dictionary (range))
+       (flatten)
+       (remove nil?)))
 
 (defn synonym-annotation? [annotation]
   (= "true" (get-in annotation [:meta "synonym?"])))
