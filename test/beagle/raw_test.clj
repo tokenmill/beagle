@@ -11,3 +11,11 @@
     (is (= anns anns2))
     (is (= 1 (count anns)))
     (is (= "1" (:dict-entry-id ann1)))))
+
+(deftest smoke-2
+  (let [txt "some text this AND"
+        dictionary [{:text "this AND" :id "1" :slop 1}]
+        annotator-fn (raw/annotator dictionary)
+        [ann1 :as anns] (annotator-fn txt)]
+    (is (= 0 (count anns)))
+    (is (nil? (:dict-entry-id ann1)))))

@@ -1,10 +1,10 @@
 (ns beagle.raw
   (:require [clojure.string :as s]
+            [clojure.tools.logging :as log]
             [beagle.monitor :as monitor]
-            [beagle.text-analysis :as text-analysis]
-            [clojure.tools.logging :as log])
+            [beagle.text-analysis :as text-analysis])
   (:import (org.apache.lucene.monitor MonitorQuery QueryMatch Monitor)
-           (org.apache.lucene.queryparser.classic QueryParser)
+           (org.apache.lucene.queryparser.classic QueryParser ParseException)
            (org.apache.lucene.document Document Field FieldType)
            (org.apache.lucene.index IndexOptions)))
 
@@ -28,20 +28,25 @@
               :meta          (into {} meta)})) (.getMatches (.match monitor doc (QueryMatch/SIMPLE_MATCHER))))))
 
 (defn dict-entry->monitor-queries [{:keys [id text meta type] :as dict-entry} default-analysis-conf idx]
-  (let [query-id (or id (str idx))
-        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
-    (MonitorQuery. query-id
-                   (.parse (QueryParser.
-                             (text-analysis/get-field-name dict-entry default-analysis-conf)
-                             (text-analysis/get-string-analyzer dict-entry default-analysis-conf))
-                           text)
-                   text
-                   metadata)))
+  (try
+    (let [query-id (or id (str idx))
+          metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
+      (MonitorQuery. query-id
+                     (.parse (QueryParser.
+                               (text-analysis/get-field-name dict-entry default-analysis-conf)
+                               (text-analysis/get-string-analyzer dict-entry default-analysis-conf))
+                             text)
+                     text
+                     metadata))
+    (catch ParseException e
+      (log/errorf "Failed to parse query: '%s' with exception '%s'" dict-entry e))
+    (catch Exception e (log/errorf "Failed create query: '%s' with '%s'" dict-entry e))))
 
 (defn dictionary->monitor-queries [dictionary default-analysis-conf]
-  (map (fn [dict-entry idx]
-         (dict-entry->monitor-queries dict-entry default-analysis-conf idx))
-       dictionary (range)))
+  (remove nil?
+          (map (fn [dict-entry idx]
+                 (dict-entry->monitor-queries dict-entry default-analysis-conf idx))
+               dictionary (range))))
 
 (defn match-monitor [text monitor field-names type-name opts]
   (log/debugf "Match monitor with opts='%s'" opts)
