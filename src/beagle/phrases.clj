@@ -40,11 +40,15 @@
     (.setStoreTermVectorOffsets true)))
 
 (defn annotate-text [^String text ^Monitor monitor field-names ^String type-name]
-  (let [doc (Document.)]
-    (doseq [field-name field-names]
-      (.add doc (Field. ^String field-name text field-type)))
-    (mapcat #(match->annotation text monitor type-name %)
-            (.getMatches (.match monitor doc (HighlightsMatch/MATCHER))))))
+  (try
+    (let [doc (Document.)]
+      (doseq [field-name field-names]
+        (.add doc (Field. ^String field-name text field-type)))
+      (mapcat #(match->annotation text monitor type-name %)
+              (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))))
+    (catch Exception e
+      (log/errorf "Failed to match text: '%s'" text)
+      (.printStackTrace e))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]

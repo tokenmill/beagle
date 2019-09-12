@@ -295,3 +295,11 @@
         annotator-fn (phrases/annotator dictionary)
         anns (annotator-fn txt)]
     (is (seq anns))))
+
+(deftest handle-with-bad-text
+  (let [txt " `  `"
+        dictionary [{:text "test" :id "1"}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (coll? anns))
+    (is (empty? anns))))
