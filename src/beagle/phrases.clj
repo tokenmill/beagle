@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             [jsonista.core :as json]
             [beagle.validator :as validator]
             [beagle.annotation-merger :as merger]
@@ -54,11 +55,19 @@
              (update-in [:meta] assoc :synonym? "true" :query-id query-id)))
        synonyms))
 
+(defn defer-to-one-by-one-registration [monitor monitor-queries]
+  (doseq [mq monitor-queries]
+    (try
+      (.register monitor (into-array MonitorQuery [mq]))
+      (catch Exception e
+        (log/errorf "Failed to register query: '%s'" mq)
+        (.printStackTrace e)))))
+
 (defn save-queries-in-monitor [^Monitor monitor monitor-queries]
   (try
     (.register monitor ^Iterable monitor-queries)
-    (catch Exception e
-      (.printStackTrace e))))
+    (catch Exception _
+      (defer-to-one-by-one-registration monitor monitor-queries))))
 
 (defn phrase->strings [dict-entry default-analysis-conf]
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
@@ -66,26 +75,28 @@
 
 (defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
-        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))]
-    (MonitorQuery. query-id
-                   (if slop
-                     (PhraseQuery. slop
-                                   (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                   (phrase->strings dict-entry default-analysis-conf))
-                     (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                   (phrase->strings dict-entry default-analysis-conf)))
-                   text
-                   metadata)))
+        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
+        field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
+        strings (phrase->strings dict-entry default-analysis-conf)]
+    (if (seq strings)
+      (MonitorQuery. query-id
+                     (if slop
+                       (PhraseQuery. slop field-name strings)
+                       (PhraseQuery. field-name strings))
+                     text
+                     metadata)
+      (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
 
 (defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
-  (flatten
-    (map (fn [{id :id :as dict-entry} idx]
-           (let [query-id (or id (str idx))]
-             (cons
-               (dict-entry->monitor-query dict-entry default-analysis-conf idx)
-               (map #(dict-entry->monitor-query % default-analysis-conf nil)
-                    (prepare-synonyms query-id dict-entry)))))
-         dict-entries (range))))
+  (->> (map (fn [{id :id :as dict-entry} idx]
+              (let [query-id (or id (str idx))]
+                (cons
+                  (dict-entry->monitor-query dict-entry default-analysis-conf idx)
+                  (map #(dict-entry->monitor-query % default-analysis-conf nil)
+                       (prepare-synonyms query-id dict-entry)))))
+            dict-entries (range))
+       (flatten)
+       (remove nil?)))
 
 (defn prepare-monitor [monitor dict-entries default-analysis-conf]
   (save-queries-in-monitor monitor (dict-entries->monitor-queries dict-entries default-analysis-conf)))
