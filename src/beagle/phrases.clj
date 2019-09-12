@@ -66,7 +66,7 @@
 (defn save-queries-in-monitor [^Monitor monitor monitor-queries]
   (try
     (.register monitor ^Iterable monitor-queries)
-    (catch Exception e
+    (catch Exception _
       (defer-to-one-by-one-registration monitor monitor-queries))))
 
 (defn phrase->strings [dict-entry default-analysis-conf]
