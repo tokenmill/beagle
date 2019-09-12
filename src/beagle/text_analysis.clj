@@ -1,7 +1,7 @@
 (ns beagle.text-analysis
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log])
-  (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenFilter)
+  (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenFilter TokenStream)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
@@ -112,12 +112,13 @@
 (defn text->token-strings
   "Given a text and an analyzer returns a list of tokens as strings."
   [^String text ^Analyzer analyzer]
-  (let [token-stream (.tokenStream analyzer "not-important" text)
+  (let [^TokenStream token-stream (.tokenStream analyzer "not-important" text)
         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
     (.reset token-stream)
     (reduce (fn [acc _]
               (if (.incrementToken token-stream)
                 (conj acc (.toString termAtt))
                 (do
+                  (.end token-stream)
                   (.close token-stream)
                   (reduced acc)))) [] (range))))
