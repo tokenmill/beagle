@@ -76,17 +76,16 @@
 (defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
         metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
-        analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
-    (when (seq (text-analysis/text->token-strings text analyzer))
+        field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
+        strings (phrase->strings dict-entry default-analysis-conf)]
+    (if (seq strings)
       (MonitorQuery. query-id
                      (if slop
-                       (PhraseQuery. slop
-                                     (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                     (phrase->strings dict-entry default-analysis-conf))
-                       (PhraseQuery. (text-analysis/get-field-name dict-entry default-analysis-conf)
-                                     (phrase->strings dict-entry default-analysis-conf)))
+                       (PhraseQuery. slop field-name strings)
+                       (PhraseQuery. field-name strings))
                      text
-                     metadata))))
+                     metadata)
+      (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
 
 (defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
   (->> (map (fn [{id :id :as dict-entry} idx]

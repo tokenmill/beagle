@@ -274,11 +274,17 @@
       (is (empty? anns)))))
 
 (deftest dictionary-corner-cases
+  (let [txt "Some text to test ."
+        dictionary [{:text "."} {:text "text"}]
+        annotator-fn (phrases/annotator dictionary :tokenizer :whitespace)
+        anns (annotator-fn txt)]
+    (is (= (count anns))))
   (let [txt "Some text to test."
         dictionary [{:text "."} {:text "text"}]
         annotator-fn (phrases/annotator dictionary)
         anns (annotator-fn txt)]
-    (is (seq anns)))
+    (is (seq anns))
+    (is (= 1 (count anns))))
   (let [txt "Some text to test."
         dictionary [{:text "<html></html>"} {:text "text"}]
         annotator-fn (phrases/annotator dictionary)
