@@ -11,7 +11,7 @@
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
-                                      MonitorQuerySerializer HighlightsMatch$Hit)
+                                      MonitorQuerySerializer HighlightsMatch$Hit Presearcher)
            (org.apache.lucene.search PhraseQuery MatchAllDocsQuery)
            (org.apache.lucene.util BytesRef)
            (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)))
@@ -110,7 +110,7 @@
         per-field-analyzers (PerFieldAnalyzerWrapper.
                               (text-analysis/get-string-analyzer {} {}) field-names-w-analyzers)]
     (.setIndexPath config nil monitor-query-serializer)
-    (Monitor. per-field-analyzers config)))
+    (Monitor. per-field-analyzers Presearcher/NO_FILTERING config)))
 
 (defn field-name-analyzer-mappings
   "Creates a map with field names as keys and Lucene analyzers as values.
