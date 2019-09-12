@@ -113,7 +113,7 @@
 (defn text->token-strings
   "Given a text and an analyzer returns a list of tokens as strings."
   [^String text ^Analyzer analyzer]
-  (let [^TokenStream token-stream (.tokenStream analyzer (str (rand-int 10000)) (StringReader. text))
+  (let [^TokenStream token-stream (.tokenStream analyzer "not-important" (StringReader. text))
         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
     (.reset token-stream)
     (reduce (fn [acc _]
