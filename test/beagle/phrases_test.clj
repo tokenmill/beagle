@@ -272,3 +272,20 @@
           annotator-fn (phrases/annotator dictionary)
           anns (annotator-fn txt)]
       (is (empty? anns)))))
+
+(deftest dictionary-corner-cases
+  (let [txt "Some text to test."
+        dictionary [{:text "."} {:text "text"}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (seq anns)))
+  (let [txt "Some text to test."
+        dictionary [{:text "<html></html>"} {:text "text"}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (seq anns)))
+  (let [txt "Some text to test."
+        dictionary [{:text "` ` `"} {:text "text"}]
+        annotator-fn (phrases/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (seq anns))))
