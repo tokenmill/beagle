@@ -38,15 +38,20 @@
       <version>0.2.4</version>
     </dependency>
   </dependencies>
+
   <build>
     <sourceDirectory>src</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src</directory>
+      </resource>
+    </resources>
   </build>
 
   <scm>
     <url>https://github.com/tokenmill/beagle</url>
     <connection>scm:git:git://github.com/tokenmill/beagle.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/tokenmill/beagle.git</developerConnection>
-    <tag>16e9d4a23e7dccd4e2b0f41a098d2998dece25a0</tag>
   </scm>
 
   <repositories>
