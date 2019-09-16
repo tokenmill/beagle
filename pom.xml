@@ -45,6 +45,9 @@
       <resource>
         <directory>src</directory>
       </resource>
+      <resource>
+        <directory>classes</directory>
+      </resource>
     </resources>
   </build>
 

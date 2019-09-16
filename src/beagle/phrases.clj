@@ -1,5 +1,4 @@
 (ns beagle.phrases
-  (:gen-class)
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
