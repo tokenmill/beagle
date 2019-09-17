@@ -111,31 +111,39 @@
   :state "state"
   :init "init"
   :constructors {[java.util.Collection] []
-                 [String] []}
+                 [java.util.Collection java.util.Map] []}
   :prefix Phrases-
-  :methods [[annotate [String] java.util.Collection]])
+  :methods [[annotate [String] java.util.Collection]
+            [annotate [String java.util.Map] java.util.Collection]])
 
-(defn Phrases-init [dictionary]
-  [[] (atom {:dictionary   dictionary
-             :annotator-fn (phrases/highlighter
-                             (map (fn [dictionary-entry]
-                                    {:text            (.text dictionary-entry)
-                                     :type            (.type dictionary-entry)
-                                     :id              (.id dictionary-entry)
-                                     :synonyms        (.synonyms dictionary-entry)
-                                     :case-sensitive? (.caseSensitive dictionary-entry)
-                                     :ascii-fold?     (.asciiFold dictionary-entry)
-                                     :stem?           (.stem dictionary-entry)
-                                     :stemmer         (keyword (.stemmer dictionary-entry))
-                                     :slop            (.slop dictionary-entry)
-                                     :meta            (.meta dictionary-entry)}) dictionary))})])
+(defn Phrases-init
+  ([dictionary] (Phrases-init dictionary {}))
+  ([dictionary opts]
+   [[] (atom {:dictionary   dictionary
+              :annotator-fn (phrases/highlighter
+                              (map (fn [dictionary-entry]
+                                     {:text            (.text dictionary-entry)
+                                      :type            (.type dictionary-entry)
+                                      :id              (.id dictionary-entry)
+                                      :synonyms        (.synonyms dictionary-entry)
+                                      :case-sensitive? (.caseSensitive dictionary-entry)
+                                      :ascii-fold?     (.asciiFold dictionary-entry)
+                                      :stem?           (.stem dictionary-entry)
+                                      :stemmer         (keyword (.stemmer dictionary-entry))
+                                      :slop            (.slop dictionary-entry)
+                                      :meta            (.meta dictionary-entry)}) dictionary)
+                              (reduce-kv (fn [m k v]
+                                           (assoc m (keyword k v) v)) {} opts))})]))
 
-(defn Phrases-annotate [this text]
-  (map (fn [ann] (lt.tokenmill.beagle.phrases.Annotation.
-                   (:text ann)
-                   (:type ann)
-                   (long (:begin-offset ann))
-                   (long (:end-offset ann))
-                   (:dict-entry-id ann)
-                   (:meta ann)))
-       ((@(.state this) :annotator-fn) text)))
+(defn Phrases-annotate
+  ([this text] (Phrases-annotate this text {}))
+  ([this text opts]
+   (map (fn [ann] (lt.tokenmill.beagle.phrases.Annotation.
+                    (:text ann)
+                    (:type ann)
+                    (long (:begin-offset ann))
+                    (long (:end-offset ann))
+                    (:dict-entry-id ann)
+                    (:meta ann)))
+        ((@(.state this) :annotator-fn) text (reduce-kv (fn [m k v]
+                                                          (assoc m (keyword k v) v)) {} opts)))))

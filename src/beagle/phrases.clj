@@ -193,6 +193,3 @@
      (fn
        ([text] (match text monitor field-names type-name {}))
        ([text opts] (match text monitor field-names type-name opts))))))
-
-; 1. New Interface Highlighter
-; 2. Expose Java interface
