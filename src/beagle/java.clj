@@ -3,7 +3,7 @@
   (:require [beagle.phrases :as phrases]))
 
 (gen-class
-  :name   lt.tokenmill.beagle.phrases.DictionaryEntry
+  :name lt.tokenmill.beagle.phrases.DictionaryEntry
   :state "state"
   :init "init"
   :constructors {[String] []}
@@ -110,7 +110,7 @@
   :name lt.tokenmill.beagle.phrases.Annotator
   :state "state"
   :init "init"
-  :constructors {[java.util.Collection] []
+  :constructors {[java.util.Collection]               []
                  [java.util.Collection java.util.Map] []}
   :prefix Phrases-
   :methods [[annotate [String] java.util.Collection]
@@ -132,8 +132,8 @@
                                       :stemmer         (keyword (.stemmer dictionary-entry))
                                       :slop            (.slop dictionary-entry)
                                       :meta            (.meta dictionary-entry)}) dictionary)
-                              (reduce-kv (fn [m k v]
-                                           (assoc m (keyword k v) v)) {} opts))})]))
+                              (reduce (fn [m [k v]]
+                                        (assoc m (keyword k) v)) {} opts))})]))
 
 (defn Phrases-annotate
   ([this text] (Phrases-annotate this text {}))
@@ -145,5 +145,5 @@
                     (long (:end-offset ann))
                     (:dict-entry-id ann)
                     (:meta ann)))
-        ((@(.state this) :annotator-fn) text (reduce-kv (fn [m k v]
-                                                          (assoc m (keyword k v) v)) {} opts)))))
+        ((@(.state this) :annotator-fn) text (reduce (fn [m [k v]]
+                                                       (assoc m (keyword k) v)) {} opts)))))
