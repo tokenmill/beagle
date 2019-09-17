@@ -53,6 +53,16 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
 
+## Java interface
+
+```java
+DictionaryEntry dictionaryEntry = new DictionaryEntry("test");
+HashMap<String, String> annotatorOptions = new HashMap<String, String>();
+Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
+Collection<Annotation> annotations = annotator.annotate("This is my test string", new HashMap<String, String>());
+annotations.forEach(s -> System.out.println("Annotated: " + s.text() + " at offset: " + s.beginOffset() + ":" + s.endOffset()));
+```
+
 ## Dictionary readers
 
 Three file formats are supported: csv, edn, json.
