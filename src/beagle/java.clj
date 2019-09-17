@@ -1,4 +1,5 @@
 (ns beagle.java
+  (:gen-class)
   (:require [beagle.phrases :as phrases]))
 
 (gen-class
@@ -75,18 +76,22 @@
   :prefix Annotation-
   :state "state"
   :init "init"
-  :constructors {[String String Long Long] []}
+  :constructors {[String String Long Long String java.util.Map] []}
   :methods [[text [] String]
             [type [] String]
             [beginOffset [] Long]
-            [endOffset [] Long]]
+            [endOffset [] Long]
+            [dictionaryEntryId [] String]
+            [meta [] java.util.Map]]
   :prefix Annotation-)
 
-(defn Annotation-init [text type begin end]
-  [[] (atom {:text text
-             :type type
-             :begin begin
-             :end end})])
+(defn Annotation-init [text type begin end dictionaryEntryId meta]
+  [[] (atom {:text          text
+             :type          type
+             :begin         begin
+             :end           end
+             :dict-entry-id dictionaryEntryId
+             :meta          meta})])
 
 (defn Annotation-text [this]
   (@(.state this) :text))
@@ -96,6 +101,10 @@
   (@(.state this) :begin))
 (defn Annotation-endOffset [this]
   (@(.state this) :end))
+(defn Annotation-dictionaryEntryId [this]
+  (@(.state this) :dict-entry-id))
+(defn Annotation-meta [this]
+  (@(.state this) :meta))
 
 (gen-class
   :name lt.tokenmill.beagle.phrases.Annotator
@@ -109,13 +118,24 @@
 (defn Phrases-init [dictionary]
   [[] (atom {:dictionary   dictionary
              :annotator-fn (phrases/highlighter
-                             (map (fn [^lt.tokenmill.beagle.phrases.DictionaryEntry dictionary-entry]
-                                    {:text (.text dictionary-entry)}) dictionary))})])
+                             (map (fn [dictionary-entry]
+                                    {:text            (.text dictionary-entry)
+                                     :type            (.type dictionary-entry)
+                                     :id              (.id dictionary-entry)
+                                     :synonyms        (.synonyms dictionary-entry)
+                                     :case-sensitive? (.caseSensitive dictionary-entry)
+                                     :ascii-fold?     (.asciiFold dictionary-entry)
+                                     :stem?           (.stem dictionary-entry)
+                                     :stemmer         (keyword (.stemmer dictionary-entry))
+                                     :slop            (.slop dictionary-entry)
+                                     :meta            (.meta dictionary-entry)}) dictionary))})])
 
 (defn Phrases-annotate [this text]
   (map (fn [ann] (lt.tokenmill.beagle.phrases.Annotation.
                    (:text ann)
                    (:type ann)
                    (long (:begin-offset ann))
-                   (long (:end-offset ann))))
+                   (long (:end-offset ann))
+                   (:dict-entry-id ann)
+                   (:meta ann)))
        ((@(.state this) :annotator-fn) text)))
