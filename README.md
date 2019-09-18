@@ -55,12 +55,46 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 
 ## Java interface
 
+Example:
 ```java
-DictionaryEntry dictionaryEntry = new DictionaryEntry("test");
-HashMap<String, String> annotatorOptions = new HashMap<String, String>();
+DictionaryEntry dictionaryEntry = new DictionaryEntry("test phrase");
+dictionaryEntry.setSlop(1);
+HashMap<String, Object> annotatorOptions = new HashMap<>();
+annotatorOptions.put("type-name", "LABEL");
+annotatorOptions.put("validate-dictionary?", true);
 Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
-Collection<Annotation> annotations = annotator.annotate("This is my test string", new HashMap<String, String>());
-annotations.forEach(s -> System.out.println("Annotated: " + s.text() + " at offset: " + s.beginOffset() + ":" + s.endOffset()));
+HashMap<String, Object> annotationOptions = new HashMap<>();
+annotationOptions.put("merge-annotations?", true);
+Collection<Annotation> annotations = annotator.annotate("This is my test phrase", annotationOptions);
+annotations.forEach(s -> System.out.println("Annotated: \'" + s.text() + "\' at offset: " + s.beginOffset() + ":" + s.endOffset()));
+// => Annotated: 'test phrase' at offset: 11:22
+```
+
+All the options that are present in the Clojure interface are also available for use in Java. The translation is that both
+annotator and annotation options map should have converted Clojure keywords converted to strings, e.g.
+```
+:case-sensitive? => "case-sensitive?"
+```  
+
+### Project Setup with Maven
+
+Add Clojars repository to your `pom.xml`:
+```xml
+<repositories>
+    <repository>
+        <id>clojars.org</id>
+        <url>https://repo.clojars.org</url>
+    </repository>
+</repositories>
+```
+
+and then the dependency on `beagle`:
+```xml
+<dependency>
+    <groupId>lt.tokenmill</groupId>
+    <artifactId>beagle</artifactId>
+    <version>0.1.6-SNAPSHOT</version>
+</dependency>
 ```
 
 ## Dictionary readers
