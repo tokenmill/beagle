@@ -1,5 +1,5 @@
 (ns beagle.java-test
-  (:require [clojure.test :refer :all]))
+  (:require [clojure.test :refer [deftest is]]))
 
 (deftest simple-java-interface
   (let [de (lt.tokenmill.beagle.phrases.DictionaryEntry. "test")
