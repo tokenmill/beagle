@@ -64,13 +64,13 @@
                              case-sensitive? :case-sensitive?
                              stem?           :stem?
                              stemmer-kw      :stemmer}]
-  (let [^Tokenizer tokenizr (tokenizer tokenizer-kw)
-        filters-chain (cond-> tokenizr
-                              (not case-sensitive?) (LowerCaseFilter.)
-                              ascii-fold? (ASCIIFoldingFilter.)
-                              stem? (SnowballFilter. (stemmer stemmer-kw)))]
-    (proxy [Analyzer] []
-      (createComponents [^String field-name]
+  (proxy [Analyzer] []
+    (createComponents [^String field-name]
+      (let [^Tokenizer tokenizr (tokenizer tokenizer-kw)
+            filters-chain (cond-> tokenizr
+                                  (not case-sensitive?) (LowerCaseFilter.)
+                                  ascii-fold? (ASCIIFoldingFilter.)
+                                  stem? (SnowballFilter. (stemmer stemmer-kw)))]
         (Analyzer$TokenStreamComponents.
           tokenizr ^TokenFilter (if (instance? Tokenizer filters-chain)
                                   (ClassicFilter. tokenizr)
