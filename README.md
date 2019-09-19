@@ -105,8 +105,18 @@ The test setup was for news articles and dictionary made up of names of city nam
 
 ### Single-threaded
 
+Average time spent per document ranged from 1.58 ms for dictionary of 5k phrases to 4.58 ms per document for 80k phrases.
 ![alt text](charts/st-avg-per-doc.png)
+
+Throughput of docs analyzed ranged from 626 docs/sec for dictionary of 5k phrases to 210 docs/sec for 80k phrases.
 ![alt text](charts/st-throughput-per-sec.png)
+
+Max time spent per document has couple of spikes when processing a document takes ~1000ms. These spikes should 
+have been caused either by GC pauses, or JVM deoptimizations. Aside from those spikes, max time ranges grows slowly
+from 15 ms to 72 ms. 
+
+Min time spent per document is fairly stable for any dictionary size and is about 0.45 ms. Most likely these are the
+cases when presearcher haven't found any candidate queries to run against the doc. 
 ![alt text](charts/st-min-max-per-doc.png)
 
 ### Multi-threaded
