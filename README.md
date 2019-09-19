@@ -93,9 +93,64 @@ and then the dependency on `beagle`:
 <dependency>
     <groupId>lt.tokenmill</groupId>
     <artifactId>beagle</artifactId>
-    <version>0.1.6-SNAPSHOT</version>
+    <version>0.1.6</version>
 </dependency>
 ```
+
+## Performance
+
+The performance was measured on a desktop PC with Ubuntu 19.04 and 8-core Ryzen 1700.
+ 
+The test setup was for news articles and dictionary made up of names of city names in USA.
+
+Code and data for benchmarking and more benchmarks can be found [here](https://github.com/tokenmill/beagle-performance-benchmarks).
+
+### Single-thread
+
+Average time spent per document ranged from 1.58 ms for dictionary of 5k phrases to 4.58 ms per document for 80k phrases.
+
+![alt text](charts/st-avg-per-doc.png)
+
+Throughput of docs analyzed ranged from 626 docs/sec for dictionary of 5k phrases to 210 docs/sec for 80k phrases.
+
+![alt text](charts/st-throughput-per-sec.png)
+
+Max time spent per document has couple of spikes when processing a document takes ~1000ms. These spikes should 
+have been caused either by GC pauses, or JVM deoptimizations. Aside from those spikes, max time ranges grows steadily
+from 15 ms to 72 ms as the dictionary size grows. 
+
+Min time spent per document is fairly stable for any dictionary size and is about 0.45 ms. Most likely these are the
+cases when [Presearcher](https://lucene.apache.org/core/8_2_0/monitor/index.html) haven't found any candidate queries to run against the document. 
+
+![alt text](charts/st-min-max-per-doc.png)
+
+### Multi-threaded
+
+Using `core.async` pipeline time spent per single doc ranged from 3.38 ms for dictionary of 5k phrases to 15.34 ms per document for 80k phrases.
+
+![alt text](charts/mt-avg-per-doc.png)
+
+Total time spent to process all 10k docs ranged from 2412 ms for dictionary of 5k phrases to 12595 ms per document for 80k phrases.
+
+![alt text](charts/mt-total.png)
+
+Throughput of docs analyzed ranged from 4143 docs/sec for dictionary of 5k phrases to 793 docs/sec for 80k phrases.
+
+![alt text](charts/mt-throughput-per-sec.png)
+
+Max time spent per document has risen fairy steady from 24.15 ms for dictionary of 10k phrases to 113.45 ms per document for 60k phrases.
+
+Min time spent per document varied from 0.6 ms for dictionary of 10k phrases to 1.1 ms per document for 55k phrases.
+
+![alt text](charts/mt-min-max-per-doc.png)
+
+### Conclusions
+
+Processing of a one document on average is faster in the single-thread mode by roughly by 3x compared to multi-threaded mode but even 
+in multi-threaded mode one document rarely takes more than 10 ms. 
+
+In multi-threaded mode throughput grows with the number on CPU cores almost linearly: 4143/8=518 docs per core per sec in multi-threaded mode
+while in single-thread mode 626 docs per core per sec.
 
 ## Dictionary readers
 
