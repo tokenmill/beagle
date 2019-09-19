@@ -103,6 +103,8 @@ The performance was measured on a modest desktop PC with Ubuntu 19.04, 8-core Ry
  
 The test setup was for news articles and dictionary made up of names of city names in USA.
 
+Code for benchmarking and more benchmarks can be found [here](https://github.com/tokenmill/beagle-performance-benchmarks).
+
 ### Single-threaded
 
 Average time spent per document ranged from 1.58 ms for dictionary of 5k phrases to 4.58 ms per document for 80k phrases.
@@ -141,8 +143,6 @@ Max time spent per document has risen fairy steady from 24.15 ms for dictionary 
 Min time spent per document varied from 0.6 ms for dictionary of 10k phrases to 1.1 ms per document for 55k phrases.
 
 ![alt text](charts/mt-min-max-per-doc.png)
-
-Code for benchmarking and more benchmarks can be found [here](https://github.com/tokenmill/beagle-performance-benchmarks).
 
 ## Dictionary readers
 
