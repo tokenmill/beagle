@@ -93,7 +93,7 @@ and then the dependency on `beagle`:
 <dependency>
     <groupId>lt.tokenmill</groupId>
     <artifactId>beagle</artifactId>
-    <version>0.1.6-SNAPSHOT</version>
+    <version>0.1.6</version>
 </dependency>
 ```
 
