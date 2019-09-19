@@ -97,6 +97,21 @@ and then the dependency on `beagle`:
 </dependency>
 ```
 
+## Performance
+
+The performance was measured on a modest desktop PC with Ubuntu 19.04, 8-core Ryzen 1700.
+ 
+The test setup was for news articles and dictionary made up of names of city names in USA.
+
+### Single-threaded
+
+![alt text](charts/st-avg-per-doc.png)
+![alt text](charts/st-throughput-per-sec.png)
+![alt text](charts/st-min-max-per-doc.png)
+
+### Multi-threaded
+
+
 ## Dictionary readers
 
 Three file formats are supported: csv, edn, json.
