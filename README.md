@@ -124,6 +124,25 @@ cases when presearcher haven't found any candidate queries to run against the do
 
 ### Multi-threaded
 
+Using `core.async` pipeline time spent per single doc ranged from 3.38 ms for dictionary of 5k phrases to 15.34 ms per document for 80k phrases.
+
+![alt text](charts/mt-avg-per-doc.png)
+
+Total time spent to process all 10k docs ranged from 2412 ms for dictionary of 5k phrases to 12595 ms per document for 80k phrases.
+
+![alt text](charts/mt-total.png)
+
+Throughput of docs analyzed ranged from 4143 docs/sec for dictionary of 5k phrases to 793 docs/sec for 80k phrases.
+
+![alt text](charts/mt-throughput-per-sec.png)
+
+Max time spent per document has risen fairy steady from 24.15 ms for dictionary of 10k phrases to 113.45 ms per document for 60k phrases.
+
+Min time spent per document varied from 0.6 ms for dictionary of 10k phrases to 1.1 ms per document for 55k phrases.
+
+![alt text](charts/mt-min-max-per-doc.png)
+
+Code for benchmarking and more benchmarks can be found [here](https://github.com/tokenmill/beagle-performance-benchmarks).
 
 ## Dictionary readers
 
