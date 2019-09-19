@@ -1,5 +1,4 @@
 (ns beagle.phrases
-  (:gen-class)
   (:require [clojure.string :as s]
             [clojure.java.io :as io]
             [clojure.tools.logging :as log]
@@ -158,6 +157,14 @@
           (synonym-annotation? annotation) (assoc :dict-entry-id (get-in annotation [:meta "query-id"]))
           (meta-type? annotation) (update-in [:meta] dissoc "_type")))
 
+(defn match [text monitor field-names type-name opts]
+  (if (s/blank? text)
+    []
+    (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
+      (if (:merge-annotations? opts)
+        (merger/merge-same-type-annotations annotations)
+        annotations))))
+
 (defn annotator
   "Creates an annotator function with for a given dictionary.
   Params:
@@ -172,10 +179,17 @@
   (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
         type-name (if (s/blank? type-name) "PHRASE" type-name)
         {:keys [monitor field-names]} (setup-monitor dictionary {:tokenizer tokenizer})]
-    (fn [text & {:keys [merge-annotations?]}]
-      (if (s/blank? text)
-        []
-        (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
-          (if merge-annotations?
-            (merger/merge-same-type-annotations annotations)
-            annotations))))))
+    (fn
+      ([text] (match text monitor field-names type-name {}))
+      ([text & {:as opts}] (match text monitor field-names type-name opts)))))
+
+(defn highlighter
+  ([dictionary] (highlighter dictionary {}))
+  ([dictionary opts]
+   (when (:validate-dictionary? opts) (validator/validate-dictionary dictionary))
+   (let [dictionary (if (:optimize-dictionary? opts) (optimizer/optimize dictionary) dictionary)
+         type-name (if (s/blank? (:type-name opts)) "PHRASE" (:type-name opts))
+         {:keys [monitor field-names]} (setup-monitor dictionary {:tokenizer (:tokenizer opts)})]
+     (fn
+       ([text] (match text monitor field-names type-name {}))
+       ([text opts] (match text monitor field-names type-name opts))))))

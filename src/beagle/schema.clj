@@ -23,7 +23,7 @@
 (s/def ::dict-entry
   (s/keys :req-un [::text]
           :opt-un [::type ::id ::synonyms ::meta
-                   ::case-sensitive? ::ascii-fold? ::stem? ::slop]))
+                   ::case-sensitive? ::ascii-fold? ::stem? ::stemmer ::slop]))
 
 (s/def ::dictionary (s/coll-of ::dict-entry))
 
