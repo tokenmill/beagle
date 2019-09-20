@@ -5,7 +5,31 @@
   <artifactId>beagle</artifactId>
   <version>0.1.7-SNAPSHOT</version>
   <name>beagle</name>
+  <description>Stream search library</description>
   <url>https://github.com/tokenmill/beagle</url>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Dainius Jocas</name>
+      <email>dainius.jocas@tokenmill.lt</email>
+      <organization>TokenMill</organization>
+      <organizationUrl>http://www.tokenmill.lt</organizationUrl>
+    </developer>
+    <developer>
+      <name>Žygimantas Medelis</name>
+      <email>zygimantas.medelis@gmail.com</email>
+      <organization>TokenMill</organization>
+      <organizationUrl>http://www.tokenmill.lt</organizationUrl>
+    </developer>
+  </developers>
+
   <dependencies>
     <dependency>
       <groupId>org.clojure</groupId>
@@ -63,13 +87,20 @@
       <id>clojars</id>
       <url>https://repo.clojars.org/</url>
     </repository>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+    </repository>
   </repositories>
 
   <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
     <repository>
-      <id>clojars</id>
-      <name>Clojars repository</name>
-      <url>https://clojars.org/repo</url>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
 </project>
