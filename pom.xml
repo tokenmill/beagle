@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>lt.tokenmill</groupId>
   <artifactId>beagle</artifactId>
-  <version>0.1.7-SNAPSHOT</version>
+  <version>0.1.7</version>
   <name>beagle</name>
   <description>Stream search library</description>
   <url>https://github.com/tokenmill/beagle</url>
@@ -108,7 +108,7 @@
     <url>https://github.com/tokenmill/beagle</url>
     <connection>scm:git:git://github.com/tokenmill/beagle.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/tokenmill/beagle.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>beagle-0.1.7</tag>
   </scm>
 
   <repositories>
