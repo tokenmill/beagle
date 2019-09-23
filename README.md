@@ -262,6 +262,12 @@ Examples:
   (merger/merge-same-type-annotations annotations))
 Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
 => ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
+;; You can also inline the need of merging annotations
+(let [dictionary [{:text "TEST"}
+                  {:text "This TEST is"}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "This TEST is" {:merge-annotations? true}))
+=> ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
 ```
 
 ## License
