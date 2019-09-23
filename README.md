@@ -6,8 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
-[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
-[![cljdoc badge](https://cljdoc.org/badge/lt.tokenmill/beagle)](https://cljdoc.org/d/lt.tokenmill/beagle/CURRENT)
+[![Maven Central](https://img.shields.io/maven-central/v/lt.tokenmill/beagle.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22lt.tokenmill%22%20AND%20a:%22beagle%22)
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
@@ -15,7 +14,8 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 
 ## Components
 
-- Phrase annotator
+- Phrase highlighter
+- Java interface to the phrase highlighter
 - Dictionary file readers (csv, json, edn)
 - Dictionary validator
 - Dictionary optimizer
@@ -27,29 +27,29 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 (require '[beagle.phrases :as phrases])
 
 (let [dictionary [{:text "to be annotated" :id "1"}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-
+;; Case sensitivity is controlled per dictionary entry 
 (let [dictionary [{:text "TO BE ANNOTATED" :id "1" :case-sensitive? false}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-
+;; ASCII folding is controlled per dictionary entry
 (let [dictionary [{:text "TÖ BE ÄNNÖTÄTED" :id "1" :case-sensitive? false :ascii-fold? true}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-;; Stemming support for multiple languages
+;; Stemming is supported for multiple languages per dictionary entry
 (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
-        annotator-fn (phrases/annotator dictionary)]
-  (annotator-fn "Kauno miestas"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "Kauno miestas"))
 => ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
-;; Phrases also support slop (i.e. terms edit distance)
+;; Phrases also support slop (i.e. terms edit distance) per dictionary entry
 (let [txt "before start and end after"
-        dictionary [{:text "start end" :id "1" :slop 1}]
-        annotator-fn (phrases/annotator dictionary)]
-  (annotator-fn txt))
+      dictionary [{:text "start end" :id "1" :slop 1}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn txt))
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
 
@@ -78,22 +78,13 @@ annotator and annotation options map should have converted Clojure keywords conv
 
 ### Project Setup with Maven
 
-Add Clojars repository to your `pom.xml`:
-```xml
-<repositories>
-    <repository>
-        <id>clojars.org</id>
-        <url>https://repo.clojars.org</url>
-    </repository>
-</repositories>
-```
+The library is deployed in the Maven Central Repository and you can just add the beagle dependency to your `pom.xml`:
 
-and then the dependency on `beagle`:
 ```xml
 <dependency>
     <groupId>lt.tokenmill</groupId>
     <artifactId>beagle</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
 </dependency>
 ```
 
@@ -265,11 +256,17 @@ Examples:
 
 (let [dictionary [{:text "TEST"}
                   {:text "This TEST is"}]
-      annotator (phrases/annotator dictionary)
-      annotations (annotator "This TEST is")]
+      highlighter-fn (phrases/highlighter dictionary)
+      annotations (highlighter-fn "This TEST is")]
   (println "Annotations: " annotations)
   (merger/merge-same-type-annotations annotations))
 Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
+=> ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
+;; You can also inline the need of merging annotations
+(let [dictionary [{:text "TEST"}
+                  {:text "This TEST is"}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "This TEST is" {:merge-annotations? true}))
 => ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
 ```
 
