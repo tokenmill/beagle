@@ -6,6 +6,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
+[![Maven Central](https://img.shields.io/maven-central/v/lt.tokenmill/beagle.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22lt.tokenmill%22%20AND%20a:%22beagle%22)
 [![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
 [![cljdoc badge](https://cljdoc.org/badge/lt.tokenmill/beagle)](https://cljdoc.org/d/lt.tokenmill/beagle/CURRENT)
 
@@ -78,17 +79,8 @@ annotator and annotation options map should have converted Clojure keywords conv
 
 ### Project Setup with Maven
 
-Add Clojars repository to your `pom.xml`:
-```xml
-<repositories>
-    <repository>
-        <id>clojars.org</id>
-        <url>https://repo.clojars.org</url>
-    </repository>
-</repositories>
-```
+Because project is stored in Maven Central Repository just add the beagle dependency to the `pom.xml`:
 
-and then the dependency on `beagle`:
 ```xml
 <dependency>
     <groupId>lt.tokenmill</groupId>
