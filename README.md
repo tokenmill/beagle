@@ -5,7 +5,7 @@
 # beagle
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
+[![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/pipelines/master/latest)
 [![Maven Central](https://img.shields.io/maven-central/v/lt.tokenmill/beagle.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22lt.tokenmill%22%20AND%20a:%22beagle%22)
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
@@ -57,16 +57,29 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 
 Example:
 ```java
-DictionaryEntry dictionaryEntry = new DictionaryEntry("test phrase");
-dictionaryEntry.setSlop(1);
-HashMap<String, Object> annotatorOptions = new HashMap<>();
-annotatorOptions.put("type-name", "LABEL");
-annotatorOptions.put("validate-dictionary?", true);
-Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
-HashMap<String, Object> annotationOptions = new HashMap<>();
-annotationOptions.put("merge-annotations?", true);
-Collection<Annotation> annotations = annotator.annotate("This is my test phrase", annotationOptions);
-annotations.forEach(s -> System.out.println("Annotated: \'" + s.text() + "\' at offset: " + s.beginOffset() + ":" + s.endOffset()));
+import lt.tokenmill.beagle.phrases.Annotation;
+import lt.tokenmill.beagle.phrases.Annotator;
+import lt.tokenmill.beagle.phrases.DictionaryEntry;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+
+public class Main {
+    public static void main(String[] args) {
+        DictionaryEntry dictionaryEntry = new DictionaryEntry("test phrase");
+        dictionaryEntry.setSlop(1);
+        HashMap<String, Object> annotatorOptions = new HashMap<>();
+        annotatorOptions.put("type-name", "LABEL");
+        annotatorOptions.put("validate-dictionary?", true);
+        Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
+        HashMap<String, Object> annotationOptions = new HashMap<>();
+        annotationOptions.put("merge-annotations?", true);
+        Collection<Annotation> annotations = annotator.annotate("This is my test phrase", annotationOptions);
+        annotations.forEach(s -> System.out.println("Annotated: \'" + s.text() + "\' at offset: " + s.beginOffset() + ":" + s.endOffset()));
+    }
+}
+
 // => Annotated: 'test phrase' at offset: 11:22
 ```
 
