@@ -47,8 +47,8 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 => ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
 ;; Phrases also support slop (i.e. terms edit distance) per dictionary entry
 (let [txt "before start and end after"
-        dictionary [{:text "start end" :id "1" :slop 1}]
-        highlighter-fn (phrases/highlighter dictionary)]
+      dictionary [{:text "start end" :id "1" :slop 1}]
+      highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn txt))
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
