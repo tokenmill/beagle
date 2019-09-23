@@ -78,7 +78,7 @@ annotator and annotation options map should have converted Clojure keywords conv
 
 ### Project Setup with Maven
 
-The project is stored in the Maven Central Repository and you can just add the beagle dependency to the `pom.xml`:
+The library is deployed in the Maven Central Repository and you can just add the beagle dependency to your `pom.xml`:
 
 ```xml
 <dependency>
