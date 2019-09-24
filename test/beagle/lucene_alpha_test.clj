@@ -19,3 +19,10 @@
         [ann1 :as anns] (annotator-fn txt)]
     (is (= 0 (count anns)))
     (is (nil? (:dict-entry-id ann1)))))
+
+(deftest smoke-3
+  (let [txt "some number 1234 test"
+        dictionary [{:text "/.*\\d*.*/" :id "1" :slop 1}]
+        annotator-fn (lucene/annotator dictionary)
+        anns (annotator-fn txt)]
+    (is (< 0 (count anns)))))
