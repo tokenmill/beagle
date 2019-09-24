@@ -90,7 +90,7 @@
 
 (deftest synonym-optimization
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle" "luwak1"]}]
-        monitor-queries (annotations/dictionary->monitor-queries dictionary {:tokenizer :standard})]
+        monitor-queries (annotations/dict-entries->monitor-queries dictionary {:tokenizer :standard})]
     (is (= 3 (count monitor-queries)))
     (let [annotator (annotations/annotator dictionary :type-name "TEST")
           anns (annotator "this is a beagle text test luwak1")]

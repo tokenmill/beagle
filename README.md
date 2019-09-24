@@ -5,8 +5,8 @@
 # beagle
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/badges/master)
-[![Clojars Project](https://img.shields.io/clojars/v/lt.tokenmill/beagle.svg)](https://clojars.org/lt.tokenmill/beagle)
+[![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/pipelines/master/latest)
+[![Maven Central](https://img.shields.io/maven-central/v/lt.tokenmill/beagle.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22lt.tokenmill%22%20AND%20a:%22beagle%22)
 
 The detector of interesting things in the text. The intended use is in the stream search applications. Let us say you need to monitor a stream of text documents: web crawl results, chat messages, corporate documents for mentions of various keywords. *Beagle* will help you to quickly set up such system and start monitoring your documents.
 
@@ -14,7 +14,8 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 
 ## Components
 
-- Phrase annotator
+- Phrase highlighter
+- Java interface to the phrase highlighter
 - Dictionary file readers (csv, json, edn)
 - Dictionary validator
 - Dictionary optimizer
@@ -26,31 +27,134 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 (require '[beagle.phrases :as phrases])
 
 (let [dictionary [{:text "to be annotated" :id "1"}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-
+;; Case sensitivity is controlled per dictionary entry 
 (let [dictionary [{:text "TO BE ANNOTATED" :id "1" :case-sensitive? false}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-
+;; ASCII folding is controlled per dictionary entry
 (let [dictionary [{:text "TÖ BE ÄNNÖTÄTED" :id "1" :case-sensitive? false :ascii-fold? true}]
-      annotator (phrases/annotator dictionary :type-name "LABEL")]
-  (annotator "before annotated to be annotated after annotated"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
-;; Stemming support for multiple languages
+;; Stemming is supported for multiple languages per dictionary entry
 (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
-        annotator-fn (phrases/annotator dictionary)]
-  (annotator-fn "Kauno miestas"))
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "Kauno miestas"))
 => ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
-;; Phrases also support slop (i.e. terms edit distance)
+;; Phrases also support slop (i.e. terms edit distance) per dictionary entry
 (let [txt "before start and end after"
-        dictionary [{:text "start end" :id "1" :slop 1}]
-        annotator-fn (phrases/annotator dictionary)]
-  (annotator-fn txt))
+      dictionary [{:text "start end" :id "1" :slop 1}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn txt))
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
+
+## Java interface
+
+Example:
+```java
+import lt.tokenmill.beagle.phrases.Annotation;
+import lt.tokenmill.beagle.phrases.Annotator;
+import lt.tokenmill.beagle.phrases.DictionaryEntry;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+
+public class Main {
+    public static void main(String[] args) {
+        DictionaryEntry dictionaryEntry = new DictionaryEntry("test phrase");
+        dictionaryEntry.setSlop(1);
+        HashMap<String, Object> annotatorOptions = new HashMap<>();
+        annotatorOptions.put("type-name", "LABEL");
+        annotatorOptions.put("validate-dictionary?", true);
+        Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
+        HashMap<String, Object> annotationOptions = new HashMap<>();
+        annotationOptions.put("merge-annotations?", true);
+        Collection<Annotation> annotations = annotator.annotate("This is my test phrase", annotationOptions);
+        annotations.forEach(s -> System.out.println("Annotated: \'" + s.text() + "\' at offset: " + s.beginOffset() + ":" + s.endOffset()));
+    }
+}
+
+// => Annotated: 'test phrase' at offset: 11:22
+```
+
+All the options that are present in the Clojure interface are also available for use in Java. The translation is that both
+annotator and annotation options map should have converted Clojure keywords converted to strings, e.g.
+```
+:case-sensitive? => "case-sensitive?"
+```  
+
+### Project Setup with Maven
+
+The library is deployed in the Maven Central Repository and you can just add the beagle dependency to your `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>lt.tokenmill</groupId>
+    <artifactId>beagle</artifactId>
+    <version>0.1.7</version>
+</dependency>
+```
+
+## Performance
+
+The performance was measured on a desktop PC with Ubuntu 19.04 and 8-core Ryzen 1700.
+ 
+The test setup was for news articles and dictionary made up of names of city names in USA.
+
+Code and data for benchmarking and more benchmarks can be found [here](https://github.com/tokenmill/beagle-performance-benchmarks).
+
+### Single-thread
+
+Average time spent per document ranged from 1.58 ms for dictionary of 5k phrases to 4.58 ms per document for 80k phrases.
+
+![alt text](charts/st-avg-per-doc.png)
+
+Throughput of docs analyzed ranged from 626 docs/sec for dictionary of 5k phrases to 210 docs/sec for 80k phrases.
+
+![alt text](charts/st-throughput-per-sec.png)
+
+Max time spent per document has couple of spikes when processing a document takes ~1000ms. These spikes should 
+have been caused either by GC pauses, or JVM deoptimizations. Aside from those spikes, max time ranges grows steadily
+from 15 ms to 72 ms as the dictionary size grows. 
+
+Min time spent per document is fairly stable for any dictionary size and is about 0.45 ms. Most likely these are the
+cases when [Presearcher](https://lucene.apache.org/core/8_2_0/monitor/index.html) haven't found any candidate queries to run against the document. 
+
+![alt text](charts/st-min-max-per-doc.png)
+
+### Multi-threaded
+
+Using `core.async` pipeline time spent per single doc ranged from 3.38 ms for dictionary of 5k phrases to 15.34 ms per document for 80k phrases.
+
+![alt text](charts/mt-avg-per-doc.png)
+
+Total time spent to process all 10k docs ranged from 2412 ms for dictionary of 5k phrases to 12595 ms per document for 80k phrases.
+
+![alt text](charts/mt-total.png)
+
+Throughput of docs analyzed ranged from 4143 docs/sec for dictionary of 5k phrases to 793 docs/sec for 80k phrases.
+
+![alt text](charts/mt-throughput-per-sec.png)
+
+Max time spent per document has risen fairy steady from 24.15 ms for dictionary of 10k phrases to 113.45 ms per document for 60k phrases.
+
+Min time spent per document varied from 0.6 ms for dictionary of 10k phrases to 1.1 ms per document for 55k phrases.
+
+![alt text](charts/mt-min-max-per-doc.png)
+
+### Conclusions
+
+Processing of a one document on average is faster in the single-thread mode by roughly by 3x compared to multi-threaded mode but even 
+in multi-threaded mode one document rarely takes more than 10 ms. 
+
+In multi-threaded mode throughput grows with the number on CPU cores almost linearly: 4143/8=518 docs per core per sec in multi-threaded mode
+while in single-thread mode 626 docs per core per sec.
 
 ## Dictionary readers
 
@@ -165,11 +269,17 @@ Examples:
 
 (let [dictionary [{:text "TEST"}
                   {:text "This TEST is"}]
-      annotator (phrases/annotator dictionary)
-      annotations (annotator "This TEST is")]
+      highlighter-fn (phrases/highlighter dictionary)
+      annotations (highlighter-fn "This TEST is")]
   (println "Annotations: " annotations)
   (merger/merge-same-type-annotations annotations))
 Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
+=> ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
+;; You can also inline the need of merging annotations
+(let [dictionary [{:text "TEST"}
+                  {:text "This TEST is"}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn "This TEST is" {:merge-annotations? true}))
 => ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
 ```
 
