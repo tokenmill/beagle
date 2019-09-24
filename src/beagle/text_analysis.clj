@@ -47,7 +47,7 @@
         (log/debugf "Stemmer '%s' not found! EnglishStemmer is used." stemmer-kw))
       (EnglishStemmer.))))
 
-(defn tokenizer [tokenizer-kw]
+(defn ^Tokenizer tokenizer [tokenizer-kw]
   (case tokenizer-kw
     :keyword (KeywordTokenizer.)
     :letter (LetterTokenizer.)
@@ -67,14 +67,16 @@
   (proxy [Analyzer] []
     (createComponents [^String field-name]
       (let [^Tokenizer tokenizr (tokenizer tokenizer-kw)
-            filters-chain (cond-> tokenizr
-                                  (not case-sensitive?) (LowerCaseFilter.)
-                                  ascii-fold? (ASCIIFoldingFilter.)
-                                  stem? (SnowballFilter. (stemmer stemmer-kw)))]
+            ^TokenStream filters-chain (cond-> tokenizr
+                                               (not case-sensitive?) (LowerCaseFilter.)
+                                               ascii-fold? (ASCIIFoldingFilter.))
+            token-stream (if stem?
+                           (SnowballFilter. filters-chain (stemmer stemmer-kw))
+                           (if (instance? Tokenizer filters-chain)
+                             (ClassicFilter. tokenizr)
+                             filters-chain))]
         (Analyzer$TokenStreamComponents.
-          tokenizr ^TokenFilter (if (instance? Tokenizer filters-chain)
-                                  (ClassicFilter. tokenizr)
-                                  filters-chain))))))
+          ^Tokenizer tokenizr ^TokenStream token-stream)))))
 
 (defn field-name-constructor [{tokenizer-kw    :tokenizer
                                ascii-fold?     :ascii-fold?

@@ -6,7 +6,8 @@
   (:import (org.apache.lucene.monitor MonitorConfiguration Monitor MonitorQuerySerializer MonitorQuery)
            (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)
            (org.apache.lucene.util BytesRef)
-           (org.apache.lucene.search MatchAllDocsQuery)))
+           (org.apache.lucene.search MatchAllDocsQuery)
+           (java.util ArrayList)))
 
 (def monitor-query-serializer
   (reify MonitorQuerySerializer
@@ -30,10 +31,10 @@
     (.setIndexPath config nil monitor-query-serializer)
     (Monitor. per-field-analyzers config)))
 
-(defn defer-to-one-by-one-registration [monitor monitor-queries]
+(defn defer-to-one-by-one-registration [^Monitor monitor monitor-queries]
   (doseq [mq monitor-queries]
     (try
-      (.register monitor (into-array MonitorQuery [mq]))
+      (.register monitor (doto (ArrayList.) (.add mq)))
       (catch Exception e
         (log/errorf "Failed to register query: '%s'" mq)
         (.printStackTrace e)))))

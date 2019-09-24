@@ -7,7 +7,7 @@
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis])
-  (:import (java.util UUID)
+  (:import (java.util UUID ArrayList)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch MonitorConfiguration
@@ -16,7 +16,7 @@
            (org.apache.lucene.util BytesRef)
            (org.apache.lucene.analysis.miscellaneous PerFieldAnalyzerWrapper)))
 
-(defn match->annotation [text monitor type-name ^HighlightsMatch match]
+(defn match->annotation [text ^Monitor monitor type-name ^HighlightsMatch match]
   (mapcat
     (fn [[_ hits]]
       (let [meta (.getMetadata (.getQuery monitor (.getQueryId match)))]
@@ -58,10 +58,10 @@
              (update-in [:meta] assoc :synonym? "true" :query-id query-id)))
        synonyms))
 
-(defn defer-to-one-by-one-registration [monitor monitor-queries]
+(defn defer-to-one-by-one-registration [^Monitor monitor monitor-queries]
   (doseq [mq monitor-queries]
     (try
-      (.register monitor (into-array MonitorQuery [mq]))
+      (.register monitor (doto (ArrayList.) (.add mq)))
       (catch Exception e
         (log/errorf "Failed to register query: '%s'" mq)
         (.printStackTrace e)))))
@@ -84,8 +84,8 @@
     (if (seq strings)
       (MonitorQuery. query-id
                      (if slop
-                       (PhraseQuery. slop field-name strings)
-                       (PhraseQuery. field-name strings))
+                       (PhraseQuery. ^Integer slop ^String field-name #^"[Ljava.lang.String;" strings)
+                       (PhraseQuery. ^String field-name #^"[Ljava.lang.String;" strings))
                      text
                      metadata)
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))

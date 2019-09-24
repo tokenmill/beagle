@@ -19,7 +19,7 @@
   (let [doc (Document.)]
     (doseq [field-name field-names]
       (.add doc (Field. ^String field-name text field-type)))
-    (map (fn [query-match]
+    (map (fn [^QueryMatch query-match]
            (let [^MonitorQuery query (.getQuery monitor (.getQueryId query-match))
                  meta (.getMetadata query)]
              {:text          (.getQueryString query)
