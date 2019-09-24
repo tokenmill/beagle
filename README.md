@@ -16,6 +16,7 @@ Implementation is based on [Lucene monitor](https://github.com/apache/lucene-sol
 
 - Phrase highlighter
 - Java interface to the phrase highlighter
+- (alpha!) Lucene query string support (interface is subject to change)
 - Dictionary file readers (csv, json, edn)
 - Dictionary validator
 - Dictionary optimizer
@@ -99,6 +100,20 @@ The library is deployed in the Maven Central Repository and you can just add the
     <artifactId>beagle</artifactId>
     <version>0.1.7</version>
 </dependency>
+```
+
+# Lucene Query Support
+
+Examples: 
+
+```clojure
+(require '[beagle.lucene-alpha :as lucene])
+
+(let [txt "some text this other that"
+        dictionary [{:text "this AND that" :id "1" :slop 1}]
+        annotator-fn (lucene/annotator dictionary)]
+  (annotator-fn txt {}))
+=> ({:text "this AND that", :type "QUERY", :dict-entry-id "1", :meta {}})
 ```
 
 ## Performance
