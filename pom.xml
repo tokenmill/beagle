@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>lt.tokenmill</groupId>
   <artifactId>beagle</artifactId>
-  <version>0.1.8-SNAPSHOT</version>
+  <version>0.3.0-SNAPSHOT</version>
   <name>beagle</name>
   <description>Stream search library</description>
   <url>https://github.com/tokenmill/beagle</url>
@@ -140,6 +140,7 @@
     <url>https://github.com/tokenmill/beagle</url>
     <connection>scm:git:git://github.com/tokenmill/beagle.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/tokenmill/beagle.git</developerConnection>
+    <tag>HEAD</tag>
   </scm>
 
   <repositories>
@@ -155,7 +156,7 @@
 
   <distributionManagement>
     <snapshotRepository>
-      <id>ossrh</id>
+        <id>ossrh</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
     <repository>
