@@ -1,11 +1,11 @@
-(ns beagle.raw-test
+(ns beagle.lucene-alpha-test
   (:require [clojure.test :refer [deftest is]]
-            [beagle.raw :as raw]))
+            [beagle.lucene-alpha :as lucene]))
 
 (deftest smoke
   (let [txt "some text this other that"
         dictionary [{:text "this AND that" :id "1" :slop 1}]
-        annotator-fn (raw/annotator dictionary)
+        annotator-fn (lucene/annotator dictionary)
         [ann1 :as anns] (annotator-fn txt {})
         anns2 (annotator-fn txt)]
     (is (= anns anns2))
@@ -15,7 +15,7 @@
 (deftest smoke-2
   (let [txt "some text this AND"
         dictionary [{:text "this AND" :id "1" :slop 1}]
-        annotator-fn (raw/annotator dictionary)
+        annotator-fn (lucene/annotator dictionary)
         [ann1 :as anns] (annotator-fn txt)]
     (is (= 0 (count anns)))
     (is (nil? (:dict-entry-id ann1)))))

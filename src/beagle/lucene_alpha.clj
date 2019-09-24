@@ -1,4 +1,4 @@
-(ns beagle.raw
+(ns beagle.lucene-alpha
   (:require [clojure.string :as s]
             [clojure.tools.logging :as log]
             [beagle.monitor :as monitor]
