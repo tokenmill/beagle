@@ -8,7 +8,7 @@
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/pipelines/master/latest)
 [![Maven Central](https://img.shields.io/maven-central/v/lt.tokenmill/beagle.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22lt.tokenmill%22%20AND%20a:%22beagle%22)
 
-Beagle is a detector of interesting things in text. Its intended use is in-stream search applications. Suppose you need to monitor a stream of text documents such as web crawl results, chat messages, or corporate documents in order to identify phrases, and complex search queries of interest. With Beagle you can quickly be up and running with such a system, allowing you to focus on productively monitoring your documents.
+Beagle is a detector of interesting things in text. Its intended use is in-stream search applications. Suppose you need to monitor a stream of text documents such as web crawl results, chat messages, or corporate documents in order to identify keywords, phrases, and complex search queries of interest. With Beagle you can quickly be up and running with such a system, allowing you to focus on productively monitoring your documents.
 
 Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tree/master/lucene/monitor) library which is based on [Luwak](https://github.com/flaxsearch/luwak).
 
