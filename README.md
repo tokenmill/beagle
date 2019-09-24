@@ -98,7 +98,7 @@ The library is deployed in the Maven Central Repository and you can just add the
 <dependency>
     <groupId>lt.tokenmill</groupId>
     <artifactId>beagle</artifactId>
-    <version>0.1.7</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
