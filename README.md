@@ -31,21 +31,25 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
       highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
+
 ;; Case sensitivity is controlled per dictionary entry 
 (let [dictionary [{:text "TO BE ANNOTATED" :id "1" :case-sensitive? false}]
       highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
+
 ;; ASCII folding is controlled per dictionary entry
 (let [dictionary [{:text "TÖ BE ÄNNÖTÄTED" :id "1" :case-sensitive? false :ascii-fold? true}]
       highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn "before annotated to be annotated after annotated"))
 => ({:text "to be annotated", :type "LABEL", :dict-entry-id "1", :meta {}, :begin-offset 17, :end-offset 32})
+
 ;; Stemming is supported for multiple languages per dictionary entry
 (let [dictionary [{:text "Kaunas" :id "1" :stem? true :stemmer :lithuanian}]
       highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn "Kauno miestas"))
 => ({:text "Kauno", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 5})
+
 ;; Phrases also support slop (i.e. terms edit distance) per dictionary entry
 (let [txt "before start and end after"
       dictionary [{:text "start end" :id "1" :slop 1}]
@@ -290,6 +294,7 @@ Examples:
   (merger/merge-same-type-annotations annotations))
 Annotations:  ({:text TEST, :type PHRASE, :dict-entry-id 0, :meta {}, :begin-offset 5, :end-offset 9} {:text This TEST is, :type PHRASE, :dict-entry-id 1, :meta {}, :begin-offset 0, :end-offset 12})
 => ({:text "This TEST is", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 0, :end-offset 12})
+
 ;; You can also inline the need of merging annotations
 (let [dictionary [{:text "TEST"}
                   {:text "This TEST is"}]
