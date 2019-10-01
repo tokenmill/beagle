@@ -4,7 +4,7 @@
   (:import (org.jsoup Jsoup)))
 
 (deftest corner-cases
-  (let [annotator (phrases/annotator [{:text            "N-Able N-Central"
+  (let [annotator (phrases/highlighter [{:text          "N-Able N-Central"
                                        :case-sensitive? false}])
         text (some-> (Jsoup/parse (slurp "test/resources/phrases.html")) (.body) (.text))]
     (is (empty? (annotator text)))))

@@ -14,7 +14,7 @@
 (s/def ::ascii-fold? boolean?)
 (s/def ::stem? boolean)
 (s/def ::stemmer keyword?)
-(s/def ::slop #(or (pos-int? %) (zero? %)))
+(s/def ::slop #(and (number? %) (or (pos-int? %) (zero? %))))
 (s/def ::meta
   (s/with-gen
     (s/map-of #(or (string? %) (keyword? %)) string?)

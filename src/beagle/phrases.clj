@@ -102,26 +102,20 @@
         (merger/merge-same-type-annotations annotations)
         annotations))))
 
-(defn annotator
-  "Creates an annotator function with for a given dictionary.
-  Params:
-  - dictionary: a list of dictionary entries as described in `beagle.schema`
-  Options:
-  - type-name: a string, defaults to \"PHRASE\"
-  - validate-dictionary?: if set to true then validates the dictionary, default false
-  - optimize-dictionary?: if set to true then optimizes dictionary before creating the monitor, default false
-  - tokenizer: a keyword one of #{:standard :whitespace}, default :standard"
-  [dictionary & {:keys [type-name validate-dictionary? optimize-dictionary? tokenizer]}]
-  (when validate-dictionary? (validator/validate-dictionary dictionary))
-  (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
-        type-name (if (s/blank? type-name) "PHRASE" type-name)
-        {:keys [monitor field-names]} (monitor/setup dictionary {:tokenizer tokenizer}
-                                                     dict-entries->monitor-queries)]
-    (fn
-      ([text] (match text monitor field-names type-name {}))
-      ([text & {:as opts}] (match text monitor field-names type-name opts)))))
-
 (defn highlighter
+  "Creates a highlighter function with for a given dictionary.
+  Params:
+  - dictionary
+      a list of dictionary entries as described in `beagle.schema`
+  Opts:
+  - type-name
+      a string, defaults to \"PHRASE\"
+  - validate-dictionary?
+      if set to true then validates the dictionary, default false
+  - optimize-dictionary?
+      if set to true then optimizes dictionary before creating the monitor, default false
+  - tokenizer
+      a keyword one of #{:keyword :letter :standard :unicode-whitespace :whitespace}, default :standard"
   ([dictionary] (highlighter dictionary {}))
   ([dictionary opts]
    (when (:validate-dictionary? opts) (validator/validate-dictionary dictionary))
@@ -132,3 +126,14 @@
      (fn
        ([text] (match text monitor field-names type-name {}))
        ([text opts] (match text monitor field-names type-name opts))))))
+
+(defn ^:deprecated annotator
+  [dictionary & {:keys [type-name validate-dictionary? optimize-dictionary? tokenizer]}]
+  (when validate-dictionary? (validator/validate-dictionary dictionary))
+  (let [dictionary (if optimize-dictionary? (optimizer/optimize dictionary) dictionary)
+        type-name (if (s/blank? type-name) "PHRASE" type-name)
+        {:keys [monitor field-names]} (monitor/setup dictionary {:tokenizer tokenizer}
+                                                     dict-entries->monitor-queries)]
+    (fn
+      ([text] (match text monitor field-names type-name {}))
+      ([text & {:as opts}] (match text monitor field-names type-name opts)))))

@@ -1,15 +1,15 @@
 (ns beagle.annotation-merge-test
   (:require [clojure.test :refer [deftest is]]
-            [beagle.phrases :as annotator]
+            [beagle.phrases :as phrases]
             [beagle.annotation-merger :as merger]))
 
 (deftest annotator-with-merge-option-test
   (let [dictionary [{:text "1 2"} {:text "2"} {:text "1 2 3 4"}
                     {:text "4"} {:text "5"} {:text "6 5 3 7"} {:text "6 5"}]
-        annotator (annotator/annotator dictionary :type-name "TEST")
+        highlighter-fn (phrases/highlighter dictionary {:type-name "TEST"})
         text "A B C 1 2 3 4 D E F G 6 5 3 7"]
-    (is (= (count (annotator text :merge-annotations? false)) (count (annotator text))))
-    (is (< (count (annotator text :merge-annotations? true)) (count (annotator text))))
+    (is (= (count (highlighter-fn text {:merge-annotations? false})) (count (highlighter-fn text))))
+    (is (< (count (highlighter-fn text {:merge-annotations? true})) (count (highlighter-fn text))))
     (is (= [{:begin-offset 6
              :dict-entry-id "2"
              :end-offset   13
@@ -22,7 +22,7 @@
              :meta        {}
              :text        "6 5 3 7"
              :type        "TEST"}]
-           (annotator text :merge-annotations? true)))))
+           (highlighter-fn text {:merge-annotations? true})))))
 
 (deftest annotation-merge-test
   (is (= [{:text "AAAAA" :type "TEST" :dict-entry-id "1" :meta {} :begin-offset 0 :end-offset 5}]
