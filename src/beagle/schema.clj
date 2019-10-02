@@ -25,6 +25,9 @@
           :opt-un [::type ::id ::synonyms ::meta
                    ::case-sensitive? ::ascii-fold? ::stem? ::stemmer ::slop]))
 
+(defrecord DictionaryEntry [text type id synonyms case-sensitive? ascii-fold?
+                            stem? stemmer slop meta])
+
 (s/def ::dictionary (s/coll-of ::dict-entry))
 
 (s/def ::begin-offset pos-int?)
@@ -34,5 +37,7 @@
 (s/def ::dictionary-annotation
   (s/keys :req-un [::text ::type ::begin-offset ::end-offset]
           :opt-un [::dict-entry-id ::meta]))
+
+(defrecord Highlight [text type dict-entry-id meta begin-offset end-offset])
 
 (s/def ::annotations (s/coll-of ::dictionary-annotation))

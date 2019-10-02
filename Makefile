@@ -2,7 +2,7 @@ lint-code:
 	clojure -A:clj-kondo
 
 unit-test:
-	clojure -A:test
+	clojure -A:test -e :noisy
 
 build-graal-validator:
 	docker build --target builder -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator .

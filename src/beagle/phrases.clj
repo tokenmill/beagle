@@ -5,7 +5,8 @@
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis]
-            [beagle.monitor :as monitor])
+            [beagle.monitor :as monitor]
+            [beagle.schema :refer [->Highlight]])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
@@ -19,12 +20,13 @@
         (map (fn [hit]
                (let [start-offset (.-startOffset ^HighlightsMatch$Hit hit)
                      end-offset (.-endOffset ^HighlightsMatch$Hit hit)]
-                 {:text          (subs text start-offset end-offset)
-                  :type          (or (get meta "_type") type-name)
-                  :dict-entry-id (.getQueryId match)
-                  :meta          (into {} meta)
-                  :begin-offset  start-offset
-                  :end-offset    end-offset})) hits)))
+                 (->Highlight
+                   (subs text start-offset end-offset)
+                   (or (get meta "_type") type-name)
+                   (.getQueryId match)
+                   (into {} meta)
+                   start-offset
+                   end-offset))) hits)))
     (.getHits match)))
 
 (def ^FieldType field-type
