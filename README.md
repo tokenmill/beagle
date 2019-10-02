@@ -14,7 +14,14 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
 
 ## Components
 
-- Phrase highlighter
+- Phrase highlighter with support for:
+  - case sensitivity,
+  - ascii folding,
+  - stemming support for various languages,
+  - phrase slop,
+  - synonymous phrases,
+  - metadata,
+  - any combination of previously mentioned features.
 - Java interface to the phrase highlighter
 - (alpha!) Lucene query string support (interface is subject to change)
 - Dictionary file readers (csv, json, edn)
@@ -22,7 +29,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
 - Dictionary optimizer
 - Annotation merger
 
-## Phrase annotator usage
+## Phrase Annotator Usage
 
 ```clojure
 (require '[beagle.phrases :as phrases])
@@ -58,7 +65,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
 
-## Java interface
+## Java Interface
 
 Example:
 ```java
@@ -167,7 +174,7 @@ Min time spent per document varied from 0.6 ms for dictionary of 10k phrases to 
 
 ![alt text](charts/mt-min-max-per-doc.png)
 
-### Conclusions
+### Conclusions about Performance
 
 Processing of a one document on average is faster in the single-thread mode by roughly by 3x compared to multi-threaded mode but even 
 in multi-threaded mode one document rarely takes more than 10 ms. 
@@ -175,11 +182,11 @@ in multi-threaded mode one document rarely takes more than 10 ms.
 In multi-threaded mode throughput grows with the number on CPU cores almost linearly: 4143/8=518 docs per core per sec in multi-threaded mode
 while in single-thread mode 626 docs per core per sec.
 
-## Dictionary readers
+## Dictionary Readers
 
 Three file formats are supported: csv, edn, json.
 
-### CSV dictionary format
+### CSV Dictionary Format
 
 Separator: ","
 Escape: "\""
@@ -197,7 +204,7 @@ Under `meta`, there should be a list of strings separated by ";". Even number of
 
 Accepts any number of dictionaries to validate as long as they are provided in pairs as '"/path/to/dictionary/file" "file-type"'
 
-### Supported file types
+### Supported File Types
 
 - csv
 - json
@@ -236,7 +243,7 @@ validate-dictionaries:
       /path/to/dict.edn edn
 ```
 
-## Dictionary optimizer
+## Dictionary Optimizer
 
 Supported optimizations:
 - Remove duplicate dictionary entries
@@ -274,7 +281,7 @@ Examples:
 => ({:text "TO BE ANNOTATED", :case-sensitive? true} {:text "TO BE ANNOTATED", :case-sensitive? false})
 ```
 
-## Annotation merger
+## Annotation Merger
 
 Only annotations of the same type are merged.
 

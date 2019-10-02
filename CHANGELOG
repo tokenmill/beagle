@@ -1,6 +1,16 @@
 # Change Log
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
+## 0.3.0 - 2019-09-24
+### Added
+- Performance optimizations
+### Changed
+- Refactored code towards batch document highlighting
+
+## 0.2.0 - 2019-09-24
+### Added
+- Alpha version for Lucene query support
+
 ## 0.1.7 - 2019-09-20
 ### Added
 - Deployment to Maven Central
