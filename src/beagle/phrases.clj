@@ -42,7 +42,11 @@
       (doseq [field-name field-names]
         (.add doc (Field. ^String field-name text field-type)))
       (mapcat #(match->annotation text monitor type-name %)
-              (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))))
+              (.getMatches
+                (.match monitor
+                        #^"[Lorg.apache.lucene.document.Document;" (into-array Document [doc])
+                        (HighlightsMatch/MATCHER))
+                0)))
     (catch Exception e
       (log/errorf "Failed to match text: '%s'" text)
       (.printStackTrace e))))
