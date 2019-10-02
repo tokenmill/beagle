@@ -12,3 +12,8 @@ build-graal-validator:
 
 build-graal-validator-docker:
 	docker build --target validator -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator .
+
+recompile-java-interface:
+	rm -rf classes
+	mkdir classes
+	clojure -e "(require 'beagle.java.annotation) (compile 'beagle.java.annotation) (compile 'beagle.java.java)"

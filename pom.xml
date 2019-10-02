@@ -140,7 +140,6 @@
     <url>https://github.com/tokenmill/beagle</url>
     <connection>scm:git:git://github.com/tokenmill/beagle.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/tokenmill/beagle.git</developerConnection>
-    <tag>HEAD</tag>
   </scm>
 
   <repositories>
