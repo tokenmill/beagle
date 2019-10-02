@@ -12,7 +12,7 @@
     (is (= 1 (count anns)))
     (is (= "1" (:dict-entry-id ann1)))))
 
-(deftest smoke-2
+(deftest ^:noisy smoke-2
   (let [txt "some text this AND"
         dictionary [{:text "this AND" :id "1" :slop 1}]
         annotator-fn (lucene/annotator dictionary)

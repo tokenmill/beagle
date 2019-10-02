@@ -5,7 +5,8 @@
             [beagle.annotation-merger :as merger]
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis]
-            [beagle.monitor :as monitor])
+            [beagle.monitor :as monitor]
+            [beagle.schema :refer [->Highlight ->DictionaryEntry]])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
@@ -19,12 +20,13 @@
         (map (fn [hit]
                (let [start-offset (.-startOffset ^HighlightsMatch$Hit hit)
                      end-offset (.-endOffset ^HighlightsMatch$Hit hit)]
-                 {:text          (subs text start-offset end-offset)
-                  :type          (or (get meta "_type") type-name)
-                  :dict-entry-id (.getQueryId match)
-                  :meta          (into {} meta)
-                  :begin-offset  start-offset
-                  :end-offset    end-offset})) hits)))
+                 (->Highlight
+                   (subs text start-offset end-offset)
+                   (or (get meta "_type") type-name)
+                   (.getQueryId match)
+                   (into {} meta)
+                   start-offset
+                   end-offset))) hits)))
     (.getHits match)))
 
 (def ^FieldType field-type
@@ -40,18 +42,29 @@
       (doseq [field-name field-names]
         (.add doc (Field. ^String field-name text field-type)))
       (mapcat #(match->annotation text monitor type-name %)
-              (.getMatches (.match monitor doc (HighlightsMatch/MATCHER)))))
+              (.getMatches
+                (.match monitor
+                        #^"[Lorg.apache.lucene.document.Document;" (into-array Document [doc])
+                        (HighlightsMatch/MATCHER))
+                0)))
     (catch Exception e
       (log/errorf "Failed to match text: '%s'" text)
       (.printStackTrace e))))
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]
-         (-> dict-entry
-             (assoc :text synonym)
-             (dissoc :synonyms)
-             (assoc :id (str (UUID/randomUUID)))
-             (update-in [:meta] assoc :synonym? "true" :query-id query-id)))
+         (->DictionaryEntry
+           synonym
+           (:type dict-entry)
+           (str (UUID/randomUUID))
+           nil
+           (:case-sensitive? dict-entry)
+           (:ascii-fold? dict-entry)
+           (:stem? dict-entry)
+           (:stemmer dict-entry)
+           (:slop dict-entry)
+           (assoc (:meta dict-entry)
+             :synonym? "true" :query-id query-id)))
        synonyms))
 
 (defn phrase->strings [dict-entry default-analysis-conf]

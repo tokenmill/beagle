@@ -10,19 +10,19 @@
         text "A B C 1 2 3 4 D E F G 6 5 3 7"]
     (is (= (count (highlighter-fn text {:merge-annotations? false})) (count (highlighter-fn text))))
     (is (< (count (highlighter-fn text {:merge-annotations? true})) (count (highlighter-fn text))))
-    (is (= [{:begin-offset 6
-             :dict-entry-id "2"
-             :end-offset   13
-             :meta        {}
-             :text        "1 2 3 4"
-             :type        "TEST"}
-            {:begin-offset 22
-             :dict-entry-id "5"
-             :end-offset   29
-             :meta        {}
-             :text        "6 5 3 7"
-             :type        "TEST"}]
-           (highlighter-fn text {:merge-annotations? true})))))
+    (is (= [(set (vals {:begin-offset  6
+                        :dict-entry-id "2"
+                        :end-offset    13
+                        :meta          {}
+                        :text          "1 2 3 4"
+                        :type          "TEST"}))
+            (set (vals {:begin-offset  22
+                        :dict-entry-id "5"
+                        :end-offset    29
+                        :meta          {}
+                        :text          "6 5 3 7"
+                        :type          "TEST"}))]
+           (map #(-> % vals set) (highlighter-fn text {:merge-annotations? true}))))))
 
 (deftest annotation-merge-test
   (is (= [{:text "AAAAA" :type "TEST" :dict-entry-id "1" :meta {} :begin-offset 0 :end-offset 5}]

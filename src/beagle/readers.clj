@@ -20,7 +20,7 @@
     (let [[header & lines] (csv/read-csv reader :separator \, :quote \")
           kvs (map keyword header)]
       (->> lines
-           (map #(apply hash-map (interleave kvs %)))
+           (map #(apply array-map (interleave kvs %)))
            (map #(into {} (remove (fn [[_ v]] (s/blank? v)) %)))
            (map (fn [{:keys [synonyms] :as dict}]
                   (if-not (s/blank? synonyms)
