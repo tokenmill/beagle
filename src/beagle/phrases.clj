@@ -66,8 +66,14 @@
     (if (seq strings)
       (MonitorQuery. query-id
                      (if slop
-                       (PhraseQuery. ^Integer slop ^String field-name #^"[Ljava.lang.String;" strings)
-                       (PhraseQuery. ^String field-name #^"[Ljava.lang.String;" strings))
+                       (let [normalized-slop (max 0 (min slop Integer/MAX_VALUE))]
+                         (when-not (= slop normalized-slop)
+                           (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
+                         (PhraseQuery. ^Integer normalized-slop
+                                       ^String field-name
+                                       #^"[Ljava.lang.String;" strings))
+                       (PhraseQuery. ^String field-name
+                                     #^"[Ljava.lang.String;" strings))
                      text
                      metadata)
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))

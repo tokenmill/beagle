@@ -273,6 +273,22 @@
           anns (highlighter-fn txt)]
       (is (empty? anns)))))
 
+(deftest extreme-values-for-phrase-slop
+  (stest/unstrument `phrases/highlighter)
+  (testing "very big slop"
+    (let [txt "before start end after"
+          dictionary [{:text "end start foo" :id "1" :slop 1000000000000}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns))))
+  (testing "slop with negative value"
+    (let [txt "before start end after"
+          dictionary [{:text "end start foo" :id "1" :slop -1}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns))))
+  (stest/instrument `phrases/highlighter))
+
 (deftest dictionary-corner-cases
   (let [txt "Some text to test ."
         dictionary [{:text "."} {:text "text"}]
