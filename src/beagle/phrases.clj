@@ -70,8 +70,8 @@
                          (when-not (= slop normalized-slop)
                            (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
                          (PhraseQuery. ^Integer normalized-slop
-                                      ^String field-name
-                                      #^"[Ljava.lang.String;" strings))
+                                       ^String field-name
+                                       #^"[Ljava.lang.String;" strings))
                        (PhraseQuery. ^String field-name
                                      #^"[Ljava.lang.String;" strings))
                      text
