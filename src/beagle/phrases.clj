@@ -6,7 +6,7 @@
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis]
             [beagle.monitor :as monitor]
-            [beagle.schema :refer [->Highlight]])
+            [beagle.schema :refer [->Highlight ->DictionaryEntry]])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions)
@@ -49,11 +49,18 @@
 
 (defn prepare-synonyms [query-id {:keys [synonyms] :as dict-entry}]
   (map (fn [synonym]
-         (-> dict-entry
-             (assoc :text synonym)
-             (dissoc :synonyms)
-             (assoc :id (str (UUID/randomUUID)))
-             (update-in [:meta] assoc :synonym? "true" :query-id query-id)))
+         (->DictionaryEntry
+           synonym
+           (:type dict-entry)
+           (str (UUID/randomUUID))
+           nil
+           (:case-sensitive? dict-entry)
+           (:ascii-fold? dict-entry)
+           (:stem? dict-entry)
+           (:stemmer dict-entry)
+           (:slop dict-entry)
+           (assoc (:meta dict-entry)
+             :synonym? "true" :query-id query-id)))
        synonyms))
 
 (defn phrase->strings [dict-entry default-analysis-conf]
