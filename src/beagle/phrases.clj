@@ -73,7 +73,7 @@
 
 (defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
-        metadata (reduce-kv (fn [m k v] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
+        metadata (reduce  (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
         field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
         strings (phrase->strings dict-entry default-analysis-conf)]
     (if (seq strings)
