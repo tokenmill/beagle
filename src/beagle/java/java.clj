@@ -1,7 +1,6 @@
 (ns beagle.java.java
   (:gen-class)
-  (:require [beagle.phrases :as phrases]
-            [beagle.schema :refer [->DictionaryEntry]]))
+  (:require [beagle.phrases :as phrases]))
 
 (gen-class
   :name lt.tokenmill.beagle.phrases.DictionaryEntry
@@ -87,17 +86,16 @@
    [[] (atom {:dictionary   dictionary
               :annotator-fn (phrases/highlighter
                               (map (fn [dictionary-entry]
-                                     (->DictionaryEntry
-                                       (.text dictionary-entry)
-                                       (.type dictionary-entry)
-                                       (.id dictionary-entry)
-                                       (.synonyms dictionary-entry)
-                                       (.caseSensitive dictionary-entry)
-                                       (.asciiFold dictionary-entry)
-                                       (.stem dictionary-entry)
-                                       (keyword (.stemmer dictionary-entry))
-                                       (or (.slop dictionary-entry) 0)
-                                       (.meta dictionary-entry))) dictionary)
+                                     {:text            (.text dictionary-entry)
+                                      :type            (.type dictionary-entry)
+                                      :id              (.id dictionary-entry)
+                                      :synonyms        (.synonyms dictionary-entry)
+                                      :case-sensitive? (.caseSensitive dictionary-entry)
+                                      :ascii-fold?     (.asciiFold dictionary-entry)
+                                      :stem?           (.stem dictionary-entry)
+                                      :stemmer         (keyword (.stemmer dictionary-entry))
+                                      :slop            (.slop dictionary-entry)
+                                      :meta            (.meta dictionary-entry)}) dictionary)
                               (reduce (fn [m [k v]]
                                         (assoc m (keyword k) v)) {} opts))})]))
 
