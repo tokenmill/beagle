@@ -63,6 +63,10 @@
     </dependency>
   </dependencies>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
