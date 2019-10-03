@@ -20,6 +20,12 @@
 
 (def label "LABEL")
 
+(deftest dictionary-entry-record
+  (let [dictionary [(schema/map->DictionaryEntry {:text "test"})]
+        highlighter-fn (phrases/highlighter dictionary {:type-name label})
+        anns (highlighter-fn "before annotated test phrase after annotated")]
+    (is (= 1 (count anns)))))
+
 (deftest type-per-dictionary-entry
   (let [dictionary [{:text "test phrase" :id "1" :meta {:test "test"} :type "CUSTOM"}]
         highlighter-fn (phrases/highlighter dictionary {:type-name label})
@@ -300,6 +306,12 @@
     (is (empty? anns)))
   (testing "slop versions"
     (stest/unstrument `phrases/highlighter)
+    (testing "nil slop"
+      (let [txt "before start end after"
+            dictionary [{:text "end start foo" :id "1" :slop nil}]
+            highlighter-fn (phrases/highlighter dictionary)
+            anns (highlighter-fn txt)]
+        (is (empty? anns))))
     (testing "very big slop"
       (let [txt "before start end after"
             dictionary [{:text "end start foo" :id "1" :slop 1000000000000}]

@@ -7,17 +7,17 @@
   (s/and string? (complement str/blank?)))
 
 (s/def ::text ::non-empty-string)
-(s/def ::type string?)
-(s/def ::id string?)
-(s/def ::synonyms (s/coll-of ::non-empty-string))
-(s/def ::case-sensitive? boolean?)
-(s/def ::ascii-fold? boolean?)
-(s/def ::stem? boolean)
-(s/def ::stemmer keyword?)
-(s/def ::slop #(and (number? %) (or (pos-int? %) (zero? %))))
+(s/def ::type (s/nilable string?))
+(s/def ::id (s/nilable string?))
+(s/def ::synonyms (s/nilable (s/coll-of ::non-empty-string)))
+(s/def ::case-sensitive? (s/nilable boolean?))
+(s/def ::ascii-fold? (s/nilable boolean?))
+(s/def ::stem? (s/nilable boolean?))
+(s/def ::stemmer (s/nilable keyword?))
+(s/def ::slop (s/nilable #(and (number? %) (or (pos-int? %) (zero? %)))))
 (s/def ::meta
   (s/with-gen
-    (s/map-of #(or (string? %) (keyword? %)) string?)
+    (s/nilable (s/map-of #(or (string? %) (keyword? %)) string?))
     #(gen/fmap (fn [s] {s s}) (s/gen string?))))
 
 (s/def ::dict-entry
