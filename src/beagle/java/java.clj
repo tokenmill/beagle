@@ -86,16 +86,16 @@
    [[] (atom {:dictionary   dictionary
               :annotator-fn (phrases/highlighter
                               (map (fn [dictionary-entry]
-                                     (into {} (filter second {:text            (.text dictionary-entry)
-                                                              :type            (.type dictionary-entry)
-                                                              :id              (.id dictionary-entry)
-                                                              :synonyms        (.synonyms dictionary-entry)
-                                                              :case-sensitive? (.caseSensitive dictionary-entry)
-                                                              :ascii-fold?     (.asciiFold dictionary-entry)
-                                                              :stem?           (.stem dictionary-entry)
-                                                              :stemmer         (keyword (.stemmer dictionary-entry))
-                                                              :slop            (or (.slop dictionary-entry) 0)
-                                                              :meta            (.meta dictionary-entry)}))) dictionary)
+                                     {:text            (.text dictionary-entry)
+                                      :type            (.type dictionary-entry)
+                                      :id              (.id dictionary-entry)
+                                      :synonyms        (.synonyms dictionary-entry)
+                                      :case-sensitive? (.caseSensitive dictionary-entry)
+                                      :ascii-fold?     (.asciiFold dictionary-entry)
+                                      :stem?           (.stem dictionary-entry)
+                                      :stemmer         (keyword (.stemmer dictionary-entry))
+                                      :slop            (.slop dictionary-entry)
+                                      :meta            (.meta dictionary-entry)}) dictionary)
                               (reduce (fn [m [k v]]
                                         (assoc m (keyword k) v)) {} opts))})]))
 

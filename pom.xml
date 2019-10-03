@@ -63,6 +63,10 @@
     </dependency>
   </dependencies>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <profiles>
     <profile>
       <id>release-sign-artifacts</id>
@@ -90,6 +94,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -99,6 +104,16 @@
                 </goals>
               </execution>
             </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.1.0</version>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-deploy-plugin</artifactId>
+            <version>3.0.0-M1</version>
           </plugin>
         </plugins>
       </build>
@@ -119,6 +134,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.2</version>
         <executions>
           <execution>
             <id>empty-javadoc-jar</id>
