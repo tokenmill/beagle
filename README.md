@@ -65,7 +65,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
 ```
 
-## Java Interface
+## Java Interface to the Phrase Highlighter
 
 Example:
 ```java
@@ -80,14 +80,8 @@ import java.util.HashMap;
 public class Main {
     public static void main(String[] args) {
         DictionaryEntry dictionaryEntry = new DictionaryEntry("test phrase");
-        dictionaryEntry.setSlop(1);
-        HashMap<String, Object> annotatorOptions = new HashMap<>();
-        annotatorOptions.put("type-name", "LABEL");
-        annotatorOptions.put("validate-dictionary?", true);
-        Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry), annotatorOptions);
-        HashMap<String, Object> annotationOptions = new HashMap<>();
-        annotationOptions.put("merge-annotations?", true);
-        Collection<Annotation> annotations = annotator.annotate("This is my test phrase", annotationOptions);
+        Annotator annotator = new Annotator(Arrays.asList(dictionaryEntry));
+        Collection<Annotation> annotations = annotator.annotate("This is my test phrase");
         annotations.forEach(s -> System.out.println("Annotated: \'" + s.text() + "\' at offset: " + s.beginOffset() + ":" + s.endOffset()));
     }
 }
@@ -95,8 +89,9 @@ public class Main {
 // => Annotated: 'test phrase' at offset: 11:22
 ```
 
-All the options that are present in the Clojure interface are also available for use in Java. The translation is that both
-annotator and annotation options map should have converted Clojure keywords converted to strings, e.g.
+Available options for Java API are explained with examples in [this wiki page](https://github.com/tokenmill/beagle/wiki/Java-Interface-for-Phrase-Highlighting).
+
+All the options that are present in the Clojure interface are also available for use in Java, just Convert Clojure keywords to Java strings, e.g.
 ```
 :case-sensitive? => "case-sensitive?"
 ```  
