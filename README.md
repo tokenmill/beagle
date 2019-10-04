@@ -14,7 +14,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
 
 ## Components
 
-- Phrase highlighter with support for:
+- [Phrase highlighter with support for](#phrase-annotator-usage):
   - case sensitivity,
   - ascii folding,
   - stemming support for various languages,
@@ -22,12 +22,12 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
   - synonymous phrases,
   - metadata,
   - any combination of previously mentioned features.
-- Java interface to the phrase highlighter
-- (alpha!) Lucene query string support (interface is subject to change)
-- Dictionary file readers (csv, json, edn)
-- Dictionary validator
-- Dictionary optimizer
-- Annotation merger
+- [Java interface to the phrase highlighter](#java-interface-to-the-phrase-highlighter)
+- (alpha!) [Lucene query string support](#lucene-query-support) (interface is subject to change)
+- [Dictionary file readers (csv, json, edn)](#dictionary-readers)
+- [Dictionary validator](#dictionary-validator)
+- [Dictionary optimizer](#dictionary-optimizer)
+- [Annotation merger](#annotation-merger)
 
 ## Phrase Annotator Usage
 
@@ -108,7 +108,7 @@ The library is deployed in the Maven Central Repository and you can just add the
 </dependency>
 ```
 
-# Lucene Query Support
+## Lucene Query Support
 
 Examples: 
 
@@ -195,7 +195,7 @@ Order is not important.
 Under `synonyms`, there should be a list of string separated by ";"
 Under `meta`, there should be a list of strings separated by ";". Even number of strings is expected. In case of odd number, last one is ignored.
 
-## Validator
+## Dictionary Validator
 
 Accepts any number of dictionaries to validate as long as they are provided in pairs as '"/path/to/dictionary/file" "file-type"'
 
