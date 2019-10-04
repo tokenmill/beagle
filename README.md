@@ -2,7 +2,7 @@
       <img src=".github/tokenmill-logo.svg" width="125" height="125" align="right" />
 </a>
 
-# beagle
+# Beagle
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![pipeline status](https://gitlab.com/tokenmill/oss/beagle/badges/master/pipeline.svg)](https://gitlab.com/tokenmill/oss/beagle/pipelines/master/latest)
