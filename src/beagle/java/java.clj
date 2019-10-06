@@ -25,7 +25,7 @@
             [slop [] Integer]
             [setSlop [Integer] void]
             [tokenizer [] String]
-            [setTokenizer [] void]
+            [setTokenizer [String] void]
             [meta [] java.util.Map]
             [setMeta [java.util.Map] void]]
   :prefix DictionaryEntry-)
