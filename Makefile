@@ -1,5 +1,5 @@
 lint-code:
-	clojure -A:clj-kondo
+	clojure -A:clj-kondo --config '{:output {:exclude-files ["java"]}}'
 
 unit-test:
 	clojure -A:test -e :noisy

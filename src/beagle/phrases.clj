@@ -9,9 +9,9 @@
             [beagle.schema :refer [->Highlight ->DictionaryEntry]])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
-           (org.apache.lucene.index IndexOptions)
+           (org.apache.lucene.index IndexOptions Term)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch HighlightsMatch$Hit)
-           (org.apache.lucene.search PhraseQuery)))
+           (org.apache.lucene.search MultiPhraseQuery$Builder)))
 
 (defn match->annotation [text ^Monitor monitor type-name ^HighlightsMatch match]
   (mapcat
@@ -78,15 +78,15 @@
         strings (phrase->strings dict-entry default-analysis-conf)]
     (if (seq strings)
       (MonitorQuery. query-id
-                     (if slop
-                       (let [normalized-slop (max 0 (min slop Integer/MAX_VALUE))]
-                         (when-not (= slop normalized-slop)
-                           (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
-                         (PhraseQuery. ^Integer normalized-slop
-                                       ^String field-name
-                                       #^"[Ljava.lang.String;" strings))
-                       (PhraseQuery. ^String field-name
-                                     #^"[Ljava.lang.String;" strings))
+                     (let [mpqb (MultiPhraseQuery$Builder.)]
+                       (doseq [s strings]
+                         (.add mpqb (Term. ^String field-name ^String s)))
+                       (when slop
+                         (let [normalized-slop (max 0 (min slop Integer/MAX_VALUE))]
+                           (when-not (= slop normalized-slop)
+                             (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
+                           (.setSlop mpqb normalized-slop)))
+                       (.build mpqb))
                      text
                      metadata)
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
