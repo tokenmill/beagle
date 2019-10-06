@@ -6,7 +6,7 @@ lint:
   stage: test
   image: borkdude/clj-kondo
   when: always
-  script: clj-kondo --lint src test
+  script: clj-kondo --lint src test --config '{:output {:exclude-files ["java"]}}'
 
 unit-test:
   stage: test
