@@ -21,6 +21,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
   - phrase slop,
   - synonymous phrases,
   - metadata,
+  - tokenizer,
   - any combination of previously mentioned features.
 - [Java interface to the phrase highlighter](#java-interface-to-the-phrase-highlighter)
 - (alpha!) [Lucene query string support](#lucene-query-support) (interface is subject to change)
@@ -63,6 +64,26 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
       highlighter-fn (phrases/highlighter dictionary)]
   (highlighter-fn txt))
 => ({:text "start and end", :type "PHRASE", :dict-entry-id "1", :meta {}, :begin-offset 7, :end-offset 20})
+
+;; Every phrase can specify which tokenizer to use
+(let [txt "[URGENT!] Do this immediately!"
+      dictionary [{:text "[URGENT!]" :id "a" :tokenizer :whitespace}
+                  {:text "[URGENT!]" :id "b" :tokenizer :standard}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (clojure.pprint/pprint (highlighter-fn txt)))
+=> 
+({:text "[URGENT!]",
+  :type "PHRASE",
+  :dict-entry-id "a",
+  :meta {},
+  :begin-offset 0,
+  :end-offset 9}
+ {:text "URGENT",
+  :type "PHRASE",
+  :dict-entry-id "b",
+  :meta {},
+  :begin-offset 1,
+  :end-offset 7})
 ```
 
 ## Java Interface to the Phrase Highlighter
