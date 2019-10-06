@@ -284,7 +284,7 @@
         dictionary [{:text "."} {:text "text"}]
         highlighter-fn (phrases/highlighter dictionary {:tokenizer :whitespace})
         anns (highlighter-fn txt)]
-    (is (= (count anns))))
+    (is (= 2 (count anns))))
   (let [txt "Some text to test."
         dictionary [{:text "<html></html>"} {:text "text"}]
         highlighter-fn (phrases/highlighter dictionary)
