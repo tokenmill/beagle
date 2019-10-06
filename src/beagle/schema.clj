@@ -15,6 +15,7 @@
 (s/def ::stem? (s/nilable boolean?))
 (s/def ::stemmer (s/nilable keyword?))
 (s/def ::slop (s/nilable #(and (number? %) (or (pos-int? %) (zero? %)))))
+(s/def ::tokenizer (s/nilable keyword?))
 (s/def ::meta
   (s/with-gen
     (s/nilable (s/map-of #(or (string? %) (keyword? %)) string?))
@@ -23,10 +24,11 @@
 (s/def ::dict-entry
   (s/keys :req-un [::text]
           :opt-un [::type ::id ::synonyms ::meta
-                   ::case-sensitive? ::ascii-fold? ::stem? ::stemmer ::slop]))
+                   ::case-sensitive? ::ascii-fold? ::stem? ::stemmer ::slop
+                   ::tokenizer]))
 
 (defrecord DictionaryEntry [text type id synonyms case-sensitive? ascii-fold?
-                            stem? stemmer slop meta])
+                            stem? stemmer slop tokenizer meta])
 
 (s/def ::dictionary (s/coll-of ::dict-entry))
 

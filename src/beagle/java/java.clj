@@ -24,6 +24,8 @@
             [setStemmer [String] void]
             [slop [] Integer]
             [setSlop [Integer] void]
+            [tokenizer [] String]
+            [setTokenizer [String] void]
             [meta [] java.util.Map]
             [setMeta [java.util.Map] void]]
   :prefix DictionaryEntry-)
@@ -69,6 +71,10 @@
   (@(.state this) :meta))
 (defn DictionaryEntry-setMeta [this meta]
   (swap! (.state this) assoc :meta meta))
+(defn DictionaryEntry-tokenizer [this]
+  (@(.state this) :tokenizer))
+(defn DictionaryEntry-setTokenizer [this tokenizer]
+  (swap! (.state this) assoc :tokenizer tokenizer))
 
 (gen-class
   :name lt.tokenmill.beagle.phrases.Annotator
@@ -95,6 +101,7 @@
                                       :stem?           (.stem dictionary-entry)
                                       :stemmer         (keyword (.stemmer dictionary-entry))
                                       :slop            (.slop dictionary-entry)
+                                      :tokenizer       (keyword (.tokenizer dictionary-entry))
                                       :meta            (.meta dictionary-entry)}) dictionary)
                               (reduce (fn [m [k v]]
                                         (assoc m (keyword k) v)) {} opts))})]))

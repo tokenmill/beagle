@@ -325,3 +325,20 @@
             anns (highlighter-fn txt)]
         (is (empty? anns))))
     (stest/instrument `phrases/highlighter)))
+
+(deftest tokenizer-conf
+  (let [txt "URGENT! Do this immediately!"
+        dictionary [{:text "URGENT" :id "a" :tokenizer :whitespace}
+                    {:text "URGENT" :id "b" :tokenizer :standard}]
+        highlighter-fn (phrases/highlighter dictionary)
+        anns (highlighter-fn txt)]
+    (is (= 1 (count anns)))
+    (is (= "b" (:dict-entry-id (first anns)))))
+  (let [txt "[URGENT!] Do this immediately!"
+        dictionary [{:text "[URGENT!]" :id "a" :tokenizer :whitespace}
+                    {:text "[URGENT!]" :id "b" :tokenizer :standard}]
+        highlighter-fn (phrases/highlighter dictionary)
+        anns (highlighter-fn txt)]
+    (is (= 2 (count anns)))
+    (is (= "[URGENT!]" (:text (first (filter #(= "a" (:dict-entry-id %)) anns)))))
+    (is (= "URGENT" (:text (first (filter #(= "b" (:dict-entry-id %)) anns)))))))

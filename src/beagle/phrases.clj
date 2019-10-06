@@ -63,6 +63,7 @@
            (:stem? dict-entry)
            (:stemmer dict-entry)
            (:slop dict-entry)
+           (:tokenizer dict-entry)
            (assoc (:meta dict-entry)
              :synonym? "true" :query-id query-id)))
        synonyms))
