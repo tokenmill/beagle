@@ -28,7 +28,7 @@
                    ::tokenizer]))
 
 (defrecord DictionaryEntry [text type id synonyms case-sensitive? ascii-fold?
-                            stem? stemmer slop meta])
+                            stem? stemmer slop tokenizer meta])
 
 (s/def ::dictionary (s/coll-of ::dict-entry))
 
