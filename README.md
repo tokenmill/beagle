@@ -89,9 +89,9 @@ public class Main {
 // => Annotated: 'test phrase' at offset: 11:22
 ```
 
-Available options for Java API are explained with examples in [this wiki page](https://github.com/tokenmill/beagle/wiki/Java-Interface-for-Phrase-Highlighting).
+The available options for the Java API are explained with examples in the [Java Interface for Phrase Highlighting wiki page](https://github.com/tokenmill/beagle/wiki/Java-Interface-for-Phrase-Highlighting).
 
-All the options that are present in the Clojure interface are also available for use in Java, just Convert Clojure keywords to Java strings, e.g.
+All the options that are present in the Clojure interface are also available for use in Java, just convert Clojure keywords to Java strings, e.g.
 ```
 :case-sensitive? => "case-sensitive?"
 ```  
