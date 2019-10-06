@@ -11,7 +11,8 @@
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions Term)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch HighlightsMatch$Hit)
-           (org.apache.lucene.search MultiPhraseQuery$Builder)))
+           (org.apache.lucene.search MultiPhraseQuery$Builder)
+           (org.apache.lucene.search.spans SpanNearQuery$Builder SpanTermQuery)))
 
 (defn match->annotation [text ^Monitor monitor type-name ^HighlightsMatch match]
   (mapcat
@@ -72,22 +73,30 @@
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
-(defn dict-entry->monitor-query [{:keys [id text meta type slop] :as dict-entry} default-analysis-conf idx]
+(defn dict-entry->monitor-query [{:keys [id text meta type slop in-order?] :as dict-entry} default-analysis-conf idx]
   (let [query-id (or id (str idx))
         metadata (reduce (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
         field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
-        strings (phrase->strings dict-entry default-analysis-conf)]
+        strings (phrase->strings dict-entry default-analysis-conf)
+        normalized-slop (when slop (max 0 (min slop Integer/MAX_VALUE)))]
     (if (seq strings)
       (MonitorQuery. query-id
-                     (let [mpqb (MultiPhraseQuery$Builder.)]
-                       (doseq [s strings]
-                         (.add mpqb (Term. ^String field-name ^String s)))
-                       (when slop
-                         (let [normalized-slop (max 0 (min slop Integer/MAX_VALUE))]
+                     (if (and slop in-order?)
+                       (let [snqb (SpanNearQuery$Builder. ^String field-name in-order?)]
+                         (doseq [s strings]
+                           (.addClause snqb (SpanTermQuery. (Term. ^String field-name ^String s))))
+                         (when-not (= slop normalized-slop)
+                           (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
+                         (.setSlop snqb normalized-slop)
+                         (.build snqb))
+                       (let [mpqb (MultiPhraseQuery$Builder.)]
+                         (doseq [s strings]
+                           (.add mpqb (Term. ^String field-name ^String s)))
+                         (when slop
                            (when-not (= slop normalized-slop)
                              (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
-                           (.setSlop mpqb normalized-slop)))
-                       (.build mpqb))
+                           (.setSlop mpqb normalized-slop))
+                         (.build mpqb)))
                      text
                      metadata)
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))

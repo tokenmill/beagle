@@ -342,3 +342,15 @@
     (is (= 2 (count anns)))
     (is (= "[URGENT!]" (:text (first (filter #(= "a" (:dict-entry-id %)) anns)))))
     (is (= "URGENT" (:text (first (filter #(= "b" (:dict-entry-id %)) anns)))))))
+
+(deftest preserve-order
+  (let [txt "Token Mill"
+        dictionary [{:text "Mill Token" :slop 2 :in-order? false}]
+        highlighter-fn (phrases/highlighter dictionary)
+        anns (highlighter-fn txt)]
+    (is (= 1 (count anns))))
+  (let [txt "Token Mill"
+        dictionary [{:text "Mill Token" :slop 2 :in-order? true}]
+        highlighter-fn (phrases/highlighter dictionary)
+        anns (highlighter-fn txt)]
+    (is (= 0 (count anns)))))
