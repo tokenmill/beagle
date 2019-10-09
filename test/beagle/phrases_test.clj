@@ -343,14 +343,36 @@
     (is (= "[URGENT!]" (:text (first (filter #(= "a" (:dict-entry-id %)) anns)))))
     (is (= "URGENT" (:text (first (filter #(= "b" (:dict-entry-id %)) anns)))))))
 
-(deftest preserve-order
-  (let [txt "Token Mill"
-        dictionary [{:text "Mill Token" :slop 2 :in-order? false}]
-        highlighter-fn (phrases/highlighter dictionary)
-        anns (highlighter-fn txt)]
-    (is (= 1 (count anns))))
-  (let [txt "Token Mill"
-        dictionary [{:text "Mill Token" :slop 2 :in-order? true}]
-        highlighter-fn (phrases/highlighter dictionary)
-        anns (highlighter-fn txt)]
-    (is (= 0 (count anns)))))
+(deftest phrase-ordering-basic-case
+  (is (= 1 (count ((phrases/highlighter [{:text "Token Mill" :slop 2 :in-order? false}])
+                   "Mill Token"))))
+  (is (= 0 (count ((phrases/highlighter [{:text "Token Mill" :slop 2 :in-order? true}])
+                   "Mill Token")))))
+
+(deftest preserve-order-edge-cases
+  (testing "multiple match of a phrase"
+    (is (= 3 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 3 :in-order? false}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (is (= 2 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 1 :in-order? true}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (is (= 1 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 0 :in-order? true}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (let [highlights ((phrases/highlighter
+                        [{:text "Token Mill" :slop 1 :in-order? true :meta {:test "test"}}])
+                      "Prefix Token Mill Infix Token a Mill Suffix")]
+      (is (= 2 (count highlights)))
+      (let [first-highlight (apply min-key :begin-offset highlights)]
+        (is (= "Token Mill" (:text first-highlight)))
+        (is (= 7 (:begin-offset first-highlight)))
+        (is (= 17 (:end-offset first-highlight)))
+        (is (= {"test" "test"} (:meta first-highlight)))
+        (is (= "PHRASE" (:type first-highlight))))
+      (let [second-highlight (apply max-key :begin-offset highlights)]
+        (is (= "Token a Mill" (:text second-highlight)))
+        (is (= 24 (:begin-offset second-highlight)))
+        (is (= 36 (:end-offset second-highlight)))
+        (is (= {"test" "test"} (:meta second-highlight)))
+        (is (= "PHRASE" (:type second-highlight)))))))

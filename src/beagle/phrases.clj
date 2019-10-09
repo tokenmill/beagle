@@ -14,20 +14,65 @@
            (org.apache.lucene.search MultiPhraseQuery$Builder)
            (org.apache.lucene.search.spans SpanNearQuery$Builder SpanTermQuery)))
 
+(defn filter-and-sort-ordered-hits [^String text ^String highlight-text ordered-hits]
+  (->> ordered-hits
+       (filter (fn [^HighlightsMatch$Hit hit]
+                 (= highlight-text (let [s (.-startOffset hit)
+                                         e (.-endOffset hit)]
+                                     (subs text s e)))))
+       (sort-by (fn [^HighlightsMatch$Hit hit] (.-startOffset hit)))))
+
+(defn pair-begins-with-ends
+  "FIXME: overlapping spans e.g. \"A A\" or 'A A B'"
+  [spans-start-hits spans-end-hits]
+  (map (fn [start end] [start end]) spans-start-hits spans-end-hits))
+
+(defn ordered-hits->highlights
+  "The default highlighter fails to handle SpanNearQuery: highlights are term highlights not the whole
+  span highlights.
+  The temporary workaround works as follows:
+  1) find the very first hit
+  2) find the very last hit
+  3) assume that all spans begins and ends with the same terms
+  4) collect all hits like the beginning
+  5) collect all hits like the ending
+  6) pair beginnings with endings and make one highlight per pair"
+  [text type-name query-id metadata ordered-hits]
+  (let [^HighlightsMatch$Hit first-hit (apply min-key #(.-startOffset ^HighlightsMatch$Hit %) ordered-hits)
+        first-text (subs text (.-startOffset first-hit) (.-endOffset first-hit))
+        ^HighlightsMatch$Hit last-hit (apply max-key #(.-startOffset ^HighlightsMatch$Hit %) ordered-hits)
+        last-text (subs text (.-startOffset last-hit) (.-endOffset last-hit))
+        spans-start-hits (filter-and-sort-ordered-hits text first-text ordered-hits)
+        spans-end-hits (filter-and-sort-ordered-hits text last-text ordered-hits)
+        normalized-metadata (dissoc metadata "_in-order")]
+    (map (fn [[^HighlightsMatch$Hit span-start-hit ^HighlightsMatch$Hit span-end-hit]]
+           (let [start-offset (.-startOffset span-start-hit)
+                 end-offset (.-endOffset span-end-hit)]
+             (->Highlight
+               (subs text start-offset end-offset)
+               (or (get meta "_type") type-name)
+               query-id
+               normalized-metadata
+               start-offset
+               end-offset))) (pair-begins-with-ends spans-start-hits spans-end-hits))))
+
 (defn match->annotation [text ^Monitor monitor type-name ^HighlightsMatch match]
   (mapcat
     (fn [[_ hits]]
-      (let [meta (.getMetadata (.getQuery monitor (.getQueryId match)))]
-        (map (fn [hit]
-               (let [start-offset (.-startOffset ^HighlightsMatch$Hit hit)
-                     end-offset (.-endOffset ^HighlightsMatch$Hit hit)]
-                 (->Highlight
-                   (subs text start-offset end-offset)
-                   (or (get meta "_type") type-name)
-                   (.getQueryId match)
-                   (into {} meta)
-                   start-offset
-                   end-offset))) hits)))
+      (let [query-id (.getQueryId match)
+            metadata (into {} (.getMetadata (.getQuery monitor query-id)))]
+        (if (get metadata "_in-order")
+          (ordered-hits->highlights text type-name query-id metadata hits)
+          (map (fn [^HighlightsMatch$Hit hit]
+                 (let [start-offset (.-startOffset hit)
+                       end-offset (.-endOffset hit)]
+                   (->Highlight
+                     (subs text start-offset end-offset)
+                     (or (get metadata "_type") type-name)
+                     query-id
+                     metadata
+                     start-offset
+                     end-offset))) hits))))
     (.getHits match)))
 
 (def ^FieldType field-type
@@ -80,8 +125,8 @@
         strings (phrase->strings dict-entry default-analysis-conf)
         normalized-slop (when slop (max 0 (min slop Integer/MAX_VALUE)))]
     (if (seq strings)
-      (MonitorQuery. query-id
-                     (if (and slop in-order?)
+      (if (and (and (number? slop) (< 0 slop)) in-order?)
+        (MonitorQuery. query-id
                        (let [snqb (SpanNearQuery$Builder. ^String field-name in-order?)]
                          (doseq [s strings]
                            (.addClause snqb (SpanTermQuery. (Term. ^String field-name ^String s))))
@@ -89,6 +134,9 @@
                            (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
                          (.setSlop snqb normalized-slop)
                          (.build snqb))
+                       text
+                       (assoc metadata "_in-order" true))
+        (MonitorQuery. query-id
                        (let [mpqb (MultiPhraseQuery$Builder.)]
                          (doseq [s strings]
                            (.add mpqb (Term. ^String field-name ^String s)))
@@ -96,9 +144,9 @@
                            (when-not (= slop normalized-slop)
                              (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
                            (.setSlop mpqb normalized-slop))
-                         (.build mpqb)))
-                     text
-                     metadata)
+                         (.build mpqb))
+                       text
+                       metadata))
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
 
 (defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
