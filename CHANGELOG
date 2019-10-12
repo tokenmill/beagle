@@ -2,6 +2,8 @@
 All notable changes to this project will be documented in this file. This change log follows the conventions of [keepachangelog.com](http://keepachangelog.com/).
 
 ## 0.9.0-SNAPSHOT - 2019-10-12
+
+## 0.4.0-SNAPSHOT - 2019-10-12
 ### Added
 - Tokenizer can be specified for every dictionary entry
 - Java Interface accepts tokenizer string
