@@ -2,6 +2,9 @@ stages:
   - dictionary-validator-publish
   - test
 
+variables:
+  GIT_DEPTH: 3
+
 cache:
   key: one-key-to-rule-them-all
   paths:
