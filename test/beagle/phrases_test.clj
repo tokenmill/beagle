@@ -342,3 +342,43 @@
     (is (= 2 (count anns)))
     (is (= "[URGENT!]" (:text (first (filter #(= "a" (:dict-entry-id %)) anns)))))
     (is (= "URGENT" (:text (first (filter #(= "b" (:dict-entry-id %)) anns)))))))
+
+(deftest annotator-options
+  (testing "case sensitivity flag"
+   (let [txt "prefix PHRASE suffix"
+         dictionary [{:text "phrase"}]
+         highlighter-fn (phrases/highlighter dictionary)
+         anns (highlighter-fn txt)]
+     (is (empty? anns)))
+   (let [txt "prefix PHRASE suffix"
+         dictionary [{:text "phrase"}]
+         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false})
+         anns (highlighter-fn txt)]
+     (is (= 1 (count anns)))))
+
+  (testing "ascii folding flag"
+    (let [txt "prefix PHRÄSE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns)))
+    (let [txt "prefix PHRÄSE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
+                                                          :ascii-fold? true})
+          anns (highlighter-fn txt)]
+      (is (= 1 (count anns)))))
+
+  (testing "stemming options"
+    (let [txt "prefix PHRASES suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns)))
+    (let [txt "prefix PHRASES suffix"
+         dictionary [{:text "phrase"}]
+         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
+                                                         :stem?           true
+                                                         :stemmer         :english})
+         anns (highlighter-fn txt)]
+     (is (= 1 (count anns))))))
