@@ -1,5 +1,4 @@
 stages:
-  - dictionary-validator-publish
   - test
 
 variables:
