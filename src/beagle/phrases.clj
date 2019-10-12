@@ -22,16 +22,29 @@
                                      (subs text s e)))))
        (sort-by (fn [^HighlightsMatch$Hit hit] (.-startOffset hit)))))
 
-(defn pair-begins-with-ends
-  [spans-start-hits spans-end-hits]
-  (loop [[start & starts-tail :as starts] spans-start-hits
-         [end & ends-tail] spans-end-hits
-         pairs []]
-    (if (or (nil? start) (nil? end))
-      pairs
-      (if (= start end)
-        (recur starts ends-tail pairs)
-        (recur starts-tail ends-tail (conj pairs [start end]))))))
+(defn pair-begins-with-ends [spans-start-hits spans-end-hits]
+  (let [grouped-ends (loop [[current & xs] spans-end-hits
+                            last-item nil
+                            current-seq []
+                            filtered []]
+                       (if (nil? current)
+                         (conj filtered (last current-seq))
+                         (if (nil? last-item)
+                           (recur xs current [current] (if (seq current-seq)
+                                                         (conj filtered (last current-seq))
+                                                         filtered))
+                           (if (= (inc (.-startPosition last-item)) (.-startPosition current))
+                             (recur xs current (conj current-seq current) filtered)
+                             (recur xs current [current] (conj filtered (last current-seq)))))))]
+    (loop [[start & starts-tail :as starts] spans-start-hits
+          [end & ends-tail] grouped-ends
+          pairs []]
+     (if (or (nil? start) (nil? end))
+       pairs
+       (if (= start end)
+         (recur starts ends-tail pairs)
+         (recur (remove #(< (.-startPosition %) (.-startPosition end)) starts-tail)
+                ends-tail (conj pairs [start end])))))))
 
 (defn ordered-hits->highlights
   "The default highlighter fails to handle SpanNearQuery: highlights are term highlights not the whole
