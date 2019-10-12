@@ -1,7 +1,7 @@
 (ns beagle.text-analysis
   (:require [clojure.string :as string]
             [clojure.tools.logging :as log])
-  (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenFilter TokenStream)
+  (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenStream)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)

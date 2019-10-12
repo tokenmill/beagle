@@ -1,27 +1,39 @@
 stages:
-  - dictionary-validator-publish
   - test
+
+variables:
+  GIT_DEPTH: 3
+
+cache:
+  key: one-key-to-rule-them-all
+  paths:
+    - ./.m2/repository
+    - ./.gitlibs
 
 lint:
   stage: test
   image: borkdude/clj-kondo
+  cache: {}
   when: always
-  script: clj-kondo --lint src test --config '{:output {:exclude-files ["java"]}}'
+  script:
+  - clj-kondo --lint src test --config '{:output {:exclude-files ["java"]}}'
 
 unit-test:
   stage: test
   when: always
   image: clojure:tools-deps-alpine
   script:
-    - clojure -A:test
+    - export GITLIBS=".gitlibs/"
+    - clojure -Sdeps '{:mvn/local-repo "./.m2/repository"}' -A:test
 
 validate-sample-dictionaries:
   stage: test
   when: always
   image: clojure:tools-deps-alpine
   script:
+    - export GITLIBS=".gitlibs/"
     - >
-      clojure -m beagle.validator
+      clojure -Sdeps '{:mvn/local-repo "./.m2/repository"}' -m beagle.validator
       test/resources/dict.csv csv
       test/resources/dict.json json
       test/resources/dict.edn edn

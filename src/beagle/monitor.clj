@@ -51,10 +51,12 @@
   First group dictionary entries by field name. Then from every group of dictionary entries
   take the first entry and create an analyzer based on analysis configuration."
   [dictionary default-analysis-conf]
-  (reduce (fn [acc [k v]]
-            (assoc acc k (text-analysis/get-string-analyzer (first v) default-analysis-conf)))
-          {}
-          (group-by #(text-analysis/get-field-name % default-analysis-conf) dictionary)))
+  (->> dictionary
+       (group-by (fn [dictionary-entry]
+                   (text-analysis/get-field-name dictionary-entry default-analysis-conf)))
+       (reduce (fn [acc [field-name dict]]
+                 (assoc acc field-name (text-analysis/get-string-analyzer (first dict) default-analysis-conf)))
+               {})))
 
 (defn prepare [monitor dict-entries default-analysis-conf dictionary->monitor-queries-fn]
   (register-queries monitor (dictionary->monitor-queries-fn dict-entries default-analysis-conf)))

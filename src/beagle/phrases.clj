@@ -183,7 +183,7 @@
   "Creates a highlighter function with for a given dictionary.
   Params:
   - dictionary
-      a list of dictionary entries as described in `beagle.schema`
+      a list of dictionary entries as described in `beagle.schema/dict-entry`
   Opts:
   - type-name
       a string, defaults to \"PHRASE\"
@@ -192,14 +192,24 @@
   - optimize-dictionary?
       if set to true then optimizes dictionary before creating the monitor, default false
   - tokenizer
-      a keyword one of #{:keyword :letter :standard :unicode-whitespace :whitespace}, default :standard"
+      a keyword one of #{:keyword :letter :standard :unicode-whitespace :whitespace}, default :standard
+  - case-sensitive?
+      if set to true then text matching is case sensitive, default true
+  - ascii-fold?
+      if set to true then before matching text is ascii folded, default false
+  - stem?
+      if set to true then before matching text is stemmed, default false
+  - stemmer
+      a keyword one of #{:arabic :armenian :basque :catalan :danish :dutch :english :estonian
+      :finnish :french :german :german2 :hungarian :irish :italian :kp :lithuanian :lovins
+      :norwegian :porter :portuguese :romanian :russian :spanish :swedish :turkish}
+      that specifies the stemmer algorithm, default :english"
   ([dictionary] (highlighter dictionary {}))
   ([dictionary opts]
    (when (:validate-dictionary? opts) (validator/validate-dictionary dictionary))
    (let [dictionary (if (:optimize-dictionary? opts) (optimizer/optimize dictionary) dictionary)
          type-name (if (s/blank? (:type-name opts)) "PHRASE" (:type-name opts))
-         {:keys [monitor field-names]} (monitor/setup dictionary {:tokenizer (:tokenizer opts)}
-                                                      dict-entries->monitor-queries)]
+         {:keys [monitor field-names]} (monitor/setup dictionary opts dict-entries->monitor-queries)]
      (fn
        ([text] (match text monitor field-names type-name {}))
        ([text opts] (match text monitor field-names type-name opts))))))
