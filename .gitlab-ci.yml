@@ -2,6 +2,12 @@ stages:
   - dictionary-validator-publish
   - test
 
+cache:
+  key: one-key-to-rule-them-all
+  paths:
+    - ./.m2/repository
+    - ./.gitlibs
+
 lint:
   stage: test
   image: borkdude/clj-kondo
@@ -13,15 +19,17 @@ unit-test:
   when: always
   image: clojure:tools-deps-alpine
   script:
-    - clojure -A:test
+    - export GITLIBS=".gitlibs/"
+    - clojure -Sdeps '{:mvn/local-repo "./.m2/repository"}' -A:test
 
 validate-sample-dictionaries:
   stage: test
   when: always
   image: clojure:tools-deps-alpine
   script:
+    - export GITLIBS=".gitlibs/"
     - >
-      clojure -m beagle.validator
+      clojure -Sdeps '{:mvn/local-repo "./.m2/repository"}' -m beagle.validator
       test/resources/dict.csv csv
       test/resources/dict.json json
       test/resources/dict.edn edn
