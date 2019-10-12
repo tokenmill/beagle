@@ -14,8 +14,10 @@ cache:
 lint:
   stage: test
   image: borkdude/clj-kondo
+  cache: {}
   when: always
-  script: clj-kondo --lint src test --config '{:output {:exclude-files ["java"]}}'
+  script:
+  - clj-kondo --lint src test --config '{:output {:exclude-files ["java"]}}'
 
 unit-test:
   stage: test
