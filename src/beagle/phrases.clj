@@ -114,7 +114,7 @@
              :synonym? "true" :query-id query-id)))
        synonyms))
 
-(defn phrase->strings [dict-entry default-analysis-conf]
+(defn dict-entry->terms [dict-entry default-analysis-conf]
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
@@ -122,13 +122,13 @@
   (let [query-id (or id (str idx))
         metadata (reduce (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
         field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
-        strings (phrase->strings dict-entry default-analysis-conf)
+        terms (dict-entry->terms dict-entry default-analysis-conf)
         normalized-slop (when slop (max 0 (min slop Integer/MAX_VALUE)))]
-    (if (seq strings)
-      (if (and (and (number? slop) (< 0 slop)) in-order?)
+    (if (seq terms)
+      (if (and (and (number? slop) (< 0 slop)) in-order? (< 1 (count terms)))
         (MonitorQuery. query-id
                        (let [snqb (SpanNearQuery$Builder. ^String field-name in-order?)]
-                         (doseq [s strings]
+                         (doseq [s terms]
                            (.addClause snqb (SpanTermQuery. (Term. ^String field-name ^String s))))
                          (when-not (= slop normalized-slop)
                            (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
@@ -138,7 +138,7 @@
                        (assoc metadata "_in-order" true))
         (MonitorQuery. query-id
                        (let [mpqb (MultiPhraseQuery$Builder.)]
-                         (doseq [s strings]
+                         (doseq [s terms]
                            (.add mpqb (Term. ^String field-name ^String s)))
                          (when slop
                            (when-not (= slop normalized-slop)

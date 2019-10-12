@@ -349,6 +349,10 @@
   (is (= 0 (count ((phrases/highlighter [{:text "Token Mill" :slop 2 :in-order? true}])
                    "Mill Token")))))
 
+(deftest ordered-phrase-with-on-term
+  (is (= 1 (count ((phrases/highlighter [{:text "phrase" :slop 2 :in-order? true}])
+                   "prefix phrase suffix")))))
+
 (deftest preserve-order-edge-cases
   (testing "multiple match of a phrase"
     (is (= 3 (count ((phrases/highlighter
