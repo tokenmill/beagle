@@ -353,6 +353,20 @@
   (is (= 1 (count ((phrases/highlighter [{:text "phrase" :slop 2 :in-order? true}])
                    "prefix phrase suffix")))))
 
+(deftest ordered-phrase-with-two-equal-terms-in-front-and-end
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase" :slop 2 :in-order? true}])
+                            "prefix phrase phrase suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 20 (:end-offset ann))))
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase and phrase" :slop 2 :in-order? true}])
+                            "prefix phrase and phrase suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase and phrase" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann)))))
+
 (deftest preserve-order-edge-cases
   (testing "multiple match of a phrase"
     (is (= 3 (count ((phrases/highlighter
@@ -383,16 +397,16 @@
 
 (deftest annotator-options
   (testing "case sensitivity flag"
-   (let [txt "prefix PHRASE suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary)
-         anns (highlighter-fn txt)]
-     (is (empty? anns)))
-   (let [txt "prefix PHRASE suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false})
-         anns (highlighter-fn txt)]
-     (is (= 1 (count anns)))))
+    (let [txt "prefix PHRASE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns)))
+    (let [txt "prefix PHRASE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false})
+          anns (highlighter-fn txt)]
+      (is (= 1 (count anns)))))
 
   (testing "ascii folding flag"
     (let [txt "prefix PHRÄSE suffix"
@@ -414,9 +428,9 @@
           anns (highlighter-fn txt)]
       (is (empty? anns)))
     (let [txt "prefix PHRASES suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
-                                                         :stem?           true
-                                                         :stemmer         :english})
-         anns (highlighter-fn txt)]
-     (is (= 1 (count anns))))))
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
+                                                          :stem?           true
+                                                          :stemmer         :english})
+          anns (highlighter-fn txt)]
+      (is (= 1 (count anns))))))

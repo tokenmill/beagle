@@ -25,7 +25,14 @@
 (defn pair-begins-with-ends
   "FIXME: overlapping spans e.g. \"A A\" or 'A A B'"
   [spans-start-hits spans-end-hits]
-  (map (fn [start end] [start end]) spans-start-hits spans-end-hits))
+  (loop [[start & starts-tail :as starts] spans-start-hits
+         [end & ends-tail] spans-end-hits
+         pairs []]
+    (if (or (nil? start) (nil? end))
+      pairs
+      (if (= start end)
+        (recur starts ends-tail pairs)
+        (recur starts-tail ends-tail (conj pairs [start end]))))))
 
 (defn ordered-hits->highlights
   "The default highlighter fails to handle SpanNearQuery: highlights are term highlights not the whole
