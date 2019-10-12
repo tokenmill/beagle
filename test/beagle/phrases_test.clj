@@ -367,6 +367,29 @@
     (is (= 7 (:begin-offset ann)))
     (is (= 24 (:end-offset ann)))))
 
+(deftest ordered-ambigous-phrase
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                            "prefix phrase phrase end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann))))
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                            "prefix phrase phrase end end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann))))
+  (let [[ann1 ann2 & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                            "prefix phrase phrase end phrase end suffix")]
+    (is (= 2 (count anns)))
+    (is (= "phrase phrase end" (:text ann1)))
+    (is (= 7 (:begin-offset ann1)))
+    (is (= 24 (:end-offset ann1)))
+    (is (= "phrase end phrase end" (:text ann2)))
+    (is (= 14 (:begin-offset ann2)))
+    (is (= 35 (:end-offset ann2)))))
+
 (deftest preserve-order-edge-cases
   (testing "multiple match of a phrase"
     (is (= 3 (count ((phrases/highlighter

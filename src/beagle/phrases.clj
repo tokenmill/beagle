@@ -23,7 +23,6 @@
        (sort-by (fn [^HighlightsMatch$Hit hit] (.-startOffset hit)))))
 
 (defn pair-begins-with-ends
-  "FIXME: overlapping spans e.g. \"A A\" or 'A A B'"
   [spans-start-hits spans-end-hits]
   (loop [[start & starts-tail :as starts] spans-start-hits
          [end & ends-tail] spans-end-hits
