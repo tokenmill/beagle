@@ -22,20 +22,26 @@
                                      (subs text s e)))))
        (sort-by (fn [^HighlightsMatch$Hit hit] (.-startOffset hit)))))
 
+(defn group-sequencial-ending
+  "Groups a sequence taking only the last hit from a consecutive sub-sequence
+   of terms, e.g. [1 2 3 6 7] => [3 7]"
+  [spans-end-hits]
+  (loop [[current-term & terms] spans-end-hits
+         last-item nil
+         current-seq []
+         filtered-ends []]
+    (if (nil? current-term)
+      (conj filtered-ends (last current-seq))
+      (if (nil? last-item)
+        (recur terms current-term [current-term] (if (seq current-seq)
+                                      (conj filtered-ends (last current-seq))
+                                      filtered-ends))
+        (if (= (inc (.-startPosition last-item)) (.-startPosition current-term))
+          (recur terms current-term (conj current-seq current-term) filtered-ends)
+          (recur terms current-term [current-term] (conj filtered-ends (last current-seq))))))))
+
 (defn pair-begins-with-ends [spans-start-hits spans-end-hits]
-  (let [grouped-ends (loop [[current & xs] spans-end-hits
-                            last-item nil
-                            current-seq []
-                            filtered []]
-                       (if (nil? current)
-                         (conj filtered (last current-seq))
-                         (if (nil? last-item)
-                           (recur xs current [current] (if (seq current-seq)
-                                                         (conj filtered (last current-seq))
-                                                         filtered))
-                           (if (= (inc (.-startPosition last-item)) (.-startPosition current))
-                             (recur xs current (conj current-seq current) filtered)
-                             (recur xs current [current] (conj filtered (last current-seq)))))))]
+  (let [grouped-ends (group-sequencial-ending spans-end-hits)]
     (loop [[start & starts-tail :as starts] spans-start-hits
           [end & ends-tail] grouped-ends
           pairs []]
