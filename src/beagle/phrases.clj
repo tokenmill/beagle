@@ -34,8 +34,8 @@
       (conj filtered-ends (last current-seq))
       (if (nil? last-item)
         (recur terms current-term [current-term] (if (seq current-seq)
-                                      (conj filtered-ends (last current-seq))
-                                      filtered-ends))
+                                                   (conj filtered-ends (last current-seq))
+                                                   filtered-ends))
         (if (= (inc (.-startPosition last-item)) (.-startPosition current-term))
           (recur terms current-term (conj current-seq current-term) filtered-ends)
           (recur terms current-term [current-term] (conj filtered-ends (last current-seq))))))))
@@ -43,14 +43,14 @@
 (defn pair-begins-with-ends [spans-start-hits spans-end-hits]
   (let [grouped-ends (group-sequencial-ending spans-end-hits)]
     (loop [[start & starts-tail :as starts] spans-start-hits
-          [end & ends-tail] grouped-ends
-          pairs []]
-     (if (or (nil? start) (nil? end))
-       pairs
-       (if (= start end)
-         (recur starts ends-tail pairs)
-         (recur (remove #(< (.-startPosition %) (.-startPosition end)) starts-tail)
-                ends-tail (conj pairs [start end])))))))
+           [end & ends-tail] grouped-ends
+           pairs []]
+      (if (or (nil? start) (nil? end))
+        pairs
+        (if (= start end)
+          (recur starts ends-tail pairs)
+          (recur (remove #(< (.-startPosition %) (.-startPosition end)) starts-tail)
+                 ends-tail (conj pairs [start end])))))))
 
 (defn ordered-hits->highlights
   "The default highlighter fails to handle SpanNearQuery: highlights are term highlights not the whole
@@ -143,11 +143,27 @@
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
-(defn dict-entry->monitor-query [{:keys [id text meta type slop in-order?] :as dict-entry} default-analysis-conf idx]
-  (let [query-id (or id (str idx))
-        metadata (reduce (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
-        field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
+(defn merge-dict-entry-with-highlighter-opts
+  "There are dictionary opts that do not contribute to text analysis, but contributes
+  to querying. This function acts a single point in merging default highlighter opts
+  to the dictionary entry."
+  [dict-entry default-analysis-conf]
+  (cond-> dict-entry
+          (and (not (contains? dict-entry :slop))
+               (contains? default-analysis-conf :slop))
+          (assoc :slop (:slop default-analysis-conf))
+
+          (and (not (contains? dict-entry :in-order?))
+               (contains? default-analysis-conf :in-order?))
+          (assoc :in-order? (:in-order? default-analysis-conf))))
+
+(defn dict-entry->monitor-query [dict-entry default-analysis-conf idx]
+  (let [field-name (text-analysis/get-field-name dict-entry default-analysis-conf)
         terms (dict-entry->terms dict-entry default-analysis-conf)
+        {:keys [id text meta type slop in-order?]
+         :as dict-entry} (merge-dict-entry-with-highlighter-opts dict-entry default-analysis-conf)
+        query-id (or id (str idx))
+        metadata (reduce (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
         normalized-slop (when slop (max 0 (min slop Integer/MAX_VALUE)))]
     (if (seq terms)
       (if (and (and (number? slop) (< 0 slop)) in-order? (< 1 (count terms)))
@@ -219,16 +235,20 @@
   - tokenizer
       a keyword one of #{:keyword :letter :standard :unicode-whitespace :whitespace}, default :standard
   - case-sensitive?
-      if set to true then text matching is case sensitive, default true
+      if set to true text matching is case sensitive, default true
   - ascii-fold?
-      if set to true then before matching text is ascii folded, default false
+      if set to true before matching text is ascii folded, default false
   - stem?
-      if set to true then before matching text is stemmed, default false
+      if set to true before matching text is stemmed, default false
   - stemmer
       a keyword one of #{:arabic :armenian :basque :catalan :danish :dutch :english :estonian
       :finnish :french :german :german2 :hungarian :irish :italian :kp :lithuanian :lovins
       :norwegian :porter :portuguese :romanian :russian :spanish :swedish :turkish}
-      that specifies the stemmer algorithm, default :english"
+      that specifies the stemmer algorithm, default :english
+  - slop
+      the max edit-distance for phrase matching, default 0
+  - in-order?
+      if set to true enforces phrase terms ordering in matches, default false"
   ([dictionary] (highlighter dictionary {}))
   ([dictionary opts]
    (when (:validate-dictionary? opts) (validator/validate-dictionary dictionary))
