@@ -193,7 +193,7 @@
 (defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
   (->> dict-entries
        (mapcat (fn [idx dict-entry]
-                 (let [query-id (or (get :id dict-entry) (str idx))]
+                 (let [query-id (or (get dict-entry :id) (str idx))]
                    (cons
                      (dict-entry->monitor-query dict-entry default-analysis-conf idx)
                      (map #(dict-entry->monitor-query % default-analysis-conf nil)

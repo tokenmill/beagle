@@ -142,7 +142,7 @@
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"]}]
         highlighter-fn (phrases/highlighter dictionary {:type-name label})
         anns (highlighter-fn "before annotated beagle after annotated")]
-    (is (seq anns))
+    (is (= 1 (count anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
     (is (= "beagle" (-> anns first :text))))
 
@@ -154,7 +154,7 @@
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"] :case-sensitive? false}]
         highlighter-fn (phrases/highlighter dictionary {:type-name label})
         anns (highlighter-fn "before annotated beagle after annotated")]
-    (is (seq anns))
+    (is (= 1 (count anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
     (is (= "beagle" (-> anns first :text))))
 
@@ -392,7 +392,7 @@
     (is (= 7 (:begin-offset ann)))
     (is (= 24 (:end-offset ann))))
   (let [[ann1 & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 1 :in-order? true}])
-                                  "prefix phrase phrase a phrase end suffix")]
+                             "prefix phrase phrase a phrase end suffix")]
     (is (= 1 (count anns)))
     (is (= "phrase a phrase end" (:text ann1)))
     (is (= 14 (:begin-offset ann1)))
