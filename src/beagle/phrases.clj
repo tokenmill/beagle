@@ -191,14 +191,14 @@
       (log/warnf "Discarding the dictionary entry because no tokens: '%s'" dict-entry))))
 
 (defn dict-entries->monitor-queries [dict-entries default-analysis-conf]
-  (->> (map (fn [{id :id :as dict-entry} idx]
-              (let [query-id (or id (str idx))]
-                (cons
-                  (dict-entry->monitor-query dict-entry default-analysis-conf idx)
-                  (map #(dict-entry->monitor-query % default-analysis-conf nil)
-                       (prepare-synonyms query-id dict-entry)))))
-            dict-entries (range))
-       (flatten)
+  (->> dict-entries
+       (mapcat (fn [idx dict-entry]
+                 (let [query-id (or (get :id dict-entry) (str idx))]
+                   (cons
+                     (dict-entry->monitor-query dict-entry default-analysis-conf idx)
+                     (map #(dict-entry->monitor-query % default-analysis-conf nil)
+                          (prepare-synonyms query-id dict-entry)))))
+               (range))
        (remove nil?)))
 
 (defn synonym-annotation? [annotation]
