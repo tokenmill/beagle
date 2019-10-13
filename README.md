@@ -22,6 +22,7 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
   - synonymous phrases,
   - metadata,
   - tokenizer,
+  - ensuring order of terms in a phrase with slop,
   - any combination of previously mentioned features.
 - [Java interface to the phrase highlighter](#java-interface-to-the-phrase-highlighter)
 - (alpha!) [Lucene query string support](#lucene-query-support) (interface is subject to change)
@@ -84,6 +85,20 @@ Beagle is based on the [Lucene monitor](https://github.com/apache/lucene-solr/tr
   :meta {},
   :begin-offset 1,
   :end-offset 7})
+
+;; Ensure that phrase terms are matched in the provided order
+;; e.g. NOT preserving order (default)
+(let [txt "Mill Token"
+      dictionary [{:text "Token Mill" :slop 2 :in-order? false}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn txt))
+=> [{:text "Mill Token" :type "PHRASE" :dict-entry-id "0" :meta {} :begin-offset 0 :end-offset 10}]
+;; e.g. Preserving order
+(let [txt "Mill Token"
+      dictionary [{:text "Token Mill" :slop 2 :in-order? true}]
+      highlighter-fn (phrases/highlighter dictionary)]
+  (highlighter-fn txt))
+=> ()
 ```
 
 ## Java Interface to the Phrase Highlighter

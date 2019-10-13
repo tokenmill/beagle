@@ -142,7 +142,7 @@
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"]}]
         highlighter-fn (phrases/highlighter dictionary {:type-name label})
         anns (highlighter-fn "before annotated beagle after annotated")]
-    (is (seq anns))
+    (is (= 1 (count anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
     (is (= "beagle" (-> anns first :text))))
 
@@ -154,7 +154,7 @@
   (let [dictionary [{:text "test" :id "1" :synonyms ["beagle"] :case-sensitive? false}]
         highlighter-fn (phrases/highlighter dictionary {:type-name label})
         anns (highlighter-fn "before annotated beagle after annotated")]
-    (is (seq anns))
+    (is (= 1 (count anns)))
     (is (= "1" (-> anns first :dict-entry-id)))
     (is (= "beagle" (-> anns first :text))))
 
@@ -343,18 +343,126 @@
     (is (= "[URGENT!]" (:text (first (filter #(= "a" (:dict-entry-id %)) anns)))))
     (is (= "URGENT" (:text (first (filter #(= "b" (:dict-entry-id %)) anns)))))))
 
+(deftest phrase-ordering-basic-case
+  (is (= 1 (count ((phrases/highlighter [{:text "Token Mill" :slop 2 :in-order? false}])
+                   "Mill Token"))))
+  (is (= 0 (count ((phrases/highlighter [{:text "Token Mill" :slop 2 :in-order? true}])
+                   "Mill Token")))))
+
+(deftest highlighter-opts-for-slop-with-order
+  (is (= 0 (count ((phrases/highlighter [{:text "Token Mill"}]
+                                        {})
+                   "Mill Token"))))
+  (is (= 1 (count ((phrases/highlighter [{:text "Token Mill"}]
+                                        {:slop 2})
+                   "Mill Token"))))
+  (is (= 0 (count ((phrases/highlighter [{:text "Token Mill"}]
+                                        {:slop 2 :in-order? true})
+                   "Mill Token")))))
+
+(deftest ordered-phrase-with-on-term
+  (is (= 1 (count ((phrases/highlighter [{:text "phrase" :slop 2 :in-order? true}])
+                   "prefix phrase suffix")))))
+
+(deftest ordered-phrase-with-two-equal-terms-in-front-and-end
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase" :slop 2 :in-order? true}])
+                            "prefix phrase phrase suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 20 (:end-offset ann))))
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase and phrase" :slop 2 :in-order? true}])
+                            "prefix phrase and phrase suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase and phrase" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann)))))
+
+(deftest ordered-ambigous-phrase
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                            "prefix phrase phrase end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann))))
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                            "prefix phrase phrase end end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 24 (:end-offset ann))))
+  (let [[ann1 & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 1 :in-order? true}])
+                             "prefix phrase phrase a phrase end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase a phrase end" (:text ann1)))
+    (is (= 14 (:begin-offset ann1)))
+    (is (= 33 (:end-offset ann1))))
+
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase end end" :slop 1 :in-order? true}])
+                            "prefix phrase phrase end end suffix")]
+    (is (= 1 (count anns)))
+    (is (= "phrase phrase end end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 28 (:end-offset ann))))
+  (let [[ann & _ :as anns] ((phrases/highlighter [{:text "phrase end end" :slop 1 :in-order? true}])
+                            "prefix phrase phrase end end X X phrase phrase end end suffix")]
+    (is (= 2 (count anns)))
+    (is (= "phrase phrase end end" (:text ann)))
+    (is (= 7 (:begin-offset ann)))
+    (is (= 28 (:end-offset ann)))))
+
+(deftest complicated-ordering
+  (let [[ann1 ann2 & _ :as anns] ((phrases/highlighter [{:text "phrase phrase end" :slop 10 :in-order? true}])
+                                  "prefix phrase phrase end phrase end suffix")]
+    (is (= 2 (count anns)))
+    (is (= "phrase phrase end" (:text ann1)))
+    (is (= 7 (:begin-offset ann1)))
+    (is (= 24 (:end-offset ann1)))
+    ;; FIXME: this highlight is not correct
+    (is (= "phrase end" (:text ann2)))
+    (is (= 25 (:begin-offset ann2)))
+    (is (= 35 (:end-offset ann2)))))
+
+(deftest preserve-order-edge-cases
+  (testing "multiple match of a phrase"
+    (is (= 3 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 3 :in-order? false}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (is (= 2 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 1 :in-order? true}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (is (= 1 (count ((phrases/highlighter
+                       [{:text "Token Mill" :slop 0 :in-order? true}])
+                     "Prefix Token Mill Infix Token a Mill Suffix"))))
+    (let [highlights ((phrases/highlighter
+                        [{:text "Token Mill" :slop 1 :in-order? true :meta {:test "test"}}])
+                      "Prefix Token Mill Infix Token a Mill Suffix")]
+      (is (= 2 (count highlights)))
+      (let [first-highlight (apply min-key :begin-offset highlights)]
+        (is (= "Token Mill" (:text first-highlight)))
+        (is (= 7 (:begin-offset first-highlight)))
+        (is (= 17 (:end-offset first-highlight)))
+        (is (= {"test" "test"} (:meta first-highlight)))
+        (is (= "PHRASE" (:type first-highlight))))
+      (let [second-highlight (apply max-key :begin-offset highlights)]
+        (is (= "Token a Mill" (:text second-highlight)))
+        (is (= 24 (:begin-offset second-highlight)))
+        (is (= 36 (:end-offset second-highlight)))
+        (is (= {"test" "test"} (:meta second-highlight)))
+        (is (= "PHRASE" (:type second-highlight)))))))
+
 (deftest annotator-options
   (testing "case sensitivity flag"
-   (let [txt "prefix PHRASE suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary)
-         anns (highlighter-fn txt)]
-     (is (empty? anns)))
-   (let [txt "prefix PHRASE suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false})
-         anns (highlighter-fn txt)]
-     (is (= 1 (count anns)))))
+    (let [txt "prefix PHRASE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary)
+          anns (highlighter-fn txt)]
+      (is (empty? anns)))
+    (let [txt "prefix PHRASE suffix"
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false})
+          anns (highlighter-fn txt)]
+      (is (= 1 (count anns)))))
 
   (testing "ascii folding flag"
     (let [txt "prefix PHRÄSE suffix"
@@ -376,9 +484,9 @@
           anns (highlighter-fn txt)]
       (is (empty? anns)))
     (let [txt "prefix PHRASES suffix"
-         dictionary [{:text "phrase"}]
-         highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
-                                                         :stem?           true
-                                                         :stemmer         :english})
-         anns (highlighter-fn txt)]
-     (is (= 1 (count anns))))))
+          dictionary [{:text "phrase"}]
+          highlighter-fn (phrases/highlighter dictionary {:case-sensitive? false
+                                                          :stem?           true
+                                                          :stemmer         :english})
+          anns (highlighter-fn txt)]
+      (is (= 1 (count anns))))))
