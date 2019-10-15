@@ -265,7 +265,7 @@ Example in Gitlab CI:
 validate-dictionaries:
   stage: dictionary-validation
   when: always
-  image: registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator:2
+  image: tokenmill/beagle-dictionary-validator
   script:
     - >
       dictionary-validator
