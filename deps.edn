@@ -4,14 +4,15 @@
              org.apache.lucene/lucene-core    {:mvn/version "8.2.0"}
              org.apache.lucene/lucene-monitor {:mvn/version "8.2.0"}
              metosin/jsonista                 {:mvn/version "0.2.4"}}
- :paths     ["src" "classes" "resources"]
+ :paths     ["src" "classes"]
  :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
              "clojars" {:url "https://repo.clojars.org/"}}
  :aliases   {:dev
              {:extra-deps {org.jsoup/jsoup                {:mvn/version "1.11.3"}
                            org.clojure/test.check         {:mvn/version "0.9.0"}
                            criterium                      {:mvn/version "0.4.5"}
-                           ch.qos.logback/logback-classic {:mvn/version "1.2.3"}}}
+                           ch.qos.logback/logback-classic {:mvn/version "1.2.3"}}
+              :extra-paths ["test/resources"]}
              :clj-kondo
              {:main-opts  ["-m" "clj-kondo.main --lint src test"]
               :extra-deps {clj-kondo {:mvn/version "2019.07.31-alpha"}}
