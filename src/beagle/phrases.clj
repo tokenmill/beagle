@@ -173,7 +173,7 @@
                          (let [ordered? (cond
                                           in-order? true
                                           (and (nil? in-order?) (:fuzzy? dict-entry)) true
-                                          :default false)
+                                          :else false)
                                snqb (SpanNearQuery$Builder. ^String field-name ordered?)]
                            (doseq [term terms]
                              (if (true? (:fuzzy? dict-entry))
