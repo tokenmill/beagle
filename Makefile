@@ -4,14 +4,14 @@ lint-code:
 unit-test:
 	clojure -A:test -e :noisy
 
-build-graal-validator:
-	docker build --target builder -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator .
+build-dictionary-validator:
+	docker build --target builder -f Dockerfile -t tokenmill/beagle-dictionary-validator .
 	docker rm build || true
-	docker create --name build registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator
+	docker create --name build tokenmill/beagle-dictionary-validator
 	docker cp build:/usr/src/app/dictionary-validator dictionary-validator
 
 build-graal-validator-docker:
-	docker build --target validator -f Dockerfile -t registry.gitlab.com/tokenmill/clj-luwak/dictionary-validator .
+	docker build --target validator -f Dockerfile -t tokenmill/beagle-dictionary-validator .
 
 recompile-java-interface:
 	rm -rf classes
