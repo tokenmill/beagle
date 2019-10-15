@@ -11,8 +11,8 @@
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions Term)
            (org.apache.lucene.monitor Monitor MonitorQuery HighlightsMatch HighlightsMatch$Hit)
-           (org.apache.lucene.search MultiPhraseQuery$Builder)
-           (org.apache.lucene.search.spans SpanNearQuery$Builder SpanTermQuery)))
+           (org.apache.lucene.search MultiPhraseQuery$Builder FuzzyQuery)
+           (org.apache.lucene.search.spans SpanNearQuery$Builder SpanTermQuery SpanMultiTermQueryWrapper)))
 
 (defn filter-and-sort-ordered-hits [^String text ^String highlight-text ordered-hits]
   (->> ordered-hits
@@ -166,15 +166,28 @@
         metadata (reduce (fn [m [k v]] (assoc m (name k) v)) {} (if type (assoc meta :_type type) meta))
         normalized-slop (when slop (max 0 (min slop Integer/MAX_VALUE)))]
     (if (seq terms)
-      (if (and (and (number? slop) (< 0 slop)) in-order? (< 1 (count terms)))
+      (if (or (and (and (number? slop) (< 0 slop)) in-order? (< 1 (count terms)))
+              (:fuzzy? dict-entry))
         (MonitorQuery. query-id
-                       (let [snqb (SpanNearQuery$Builder. ^String field-name in-order?)]
-                         (doseq [s terms]
-                           (.addClause snqb (SpanTermQuery. (Term. ^String field-name ^String s))))
-                         (when-not (= slop normalized-slop)
-                           (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
-                         (.setSlop snqb normalized-slop)
-                         (.build snqb))
+                       (try
+                         (let [ordered? (cond
+                                          in-order? true
+                                          (and (nil? in-order?) (:fuzzy? dict-entry)) true
+                                          :default false)
+                               snqb (SpanNearQuery$Builder. ^String field-name ordered?)]
+                           (doseq [term terms]
+                             (if (true? (:fuzzy? dict-entry))
+                               (.addClause snqb (SpanMultiTermQueryWrapper.
+                                                  (FuzzyQuery.
+                                                    (Term. ^String field-name ^String term)
+                                                    (or (:fuzziness dict-entry) 1))))
+                               (.addClause snqb (SpanTermQuery. (Term. ^String field-name ^String term)))))
+                           (when-not (= slop normalized-slop)
+                             (log/warnf "Phrase slop '%s' normalized to '%s'" slop normalized-slop))
+                           (when normalized-slop
+                             (.setSlop snqb normalized-slop))
+                           (.build snqb))
+                         (catch Exception e (.printStackTrace e)))
                        text
                        (assoc metadata "_in-order" true))
         (MonitorQuery. query-id
