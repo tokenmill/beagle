@@ -490,3 +490,32 @@
                                                           :stemmer         :english})
           anns (highlighter-fn txt)]
       (is (= 1 (count anns))))))
+
+(deftest phrases-with-edit-distance
+  (let [txt "prefix tokne mill suffix"
+        dictionary [{:text "token mill" :fuzzy? true :fuzziness 1}]
+        highlighter-fn (phrases/highlighter dictionary {})
+        [ann1 :as anns] (highlighter-fn txt)]
+    (is (= 1 (count anns)))
+    (is (= "tokne mill" (:text ann1))))
+  (let [txt "prefix mill tokne suffix"
+        dictionary [{:text "token mill" :fuzzy? true :fuzziness 1}]
+        highlighter-fn (phrases/highlighter dictionary {})
+        anns (highlighter-fn txt)]
+    (is (empty? anns)))
+  (let [txt "prefix tokne mill suffix"
+        dictionary [{:text "mill token" :fuzzy? true :fuzziness 1 :in-order? true}]
+        highlighter-fn (phrases/highlighter dictionary {})
+        anns (highlighter-fn txt)]
+    (is (empty? anns)))
+  (let [txt "prefix mill tokne suffix"
+        dictionary [{:text "token mill" :fuzzy? true :fuzziness 1 :in-order? false}]
+        highlighter-fn (phrases/highlighter dictionary {})
+        [ann1 :as anns] (highlighter-fn txt)]
+    (is (= 1 (count anns)))
+    (is (= "mill tokne" (:text ann1))))
+  (let [txt "prefix tokne uab mill suffix"
+        dictionary [{:text "mill token" :fuzzy? true :fuzziness 1 :in-order? false}]
+        highlighter-fn (phrases/highlighter dictionary {})
+        anns (highlighter-fn txt)]
+    (is (empty? anns))))
