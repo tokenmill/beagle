@@ -1,8 +1,8 @@
 lint-code:
-	clojure -A:clj-kondo --config '{:output {:exclude-files ["java"]}}'
+	clojure -M:clj-kondo --config '{:output {:exclude-files ["java"]}}'
 
 unit-test:
-	clojure -A:runner:test -e :noisy
+	clojure -M:runner:test -e :noisy
 
 build-dictionary-validator:
 	docker build --target builder -f Dockerfile -t tokenmill/beagle-dictionary-validator .

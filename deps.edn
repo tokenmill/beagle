@@ -10,12 +10,12 @@
  :aliases   {:dev
              {:extra-deps  {org.jsoup/jsoup                {:mvn/version "1.11.3"}
                             org.clojure/test.check         {:mvn/version "0.9.0"}
-                            criterium                      {:mvn/version "0.4.5"}
+                            criterium/criterium            {:mvn/version "0.4.5"}
                             ch.qos.logback/logback-classic {:mvn/version "1.2.3"}}
               :extra-paths ["test/resources"]}
              :clj-kondo
              {:main-opts  ["-m" "clj-kondo.main --lint src test"]
-              :extra-deps {clj-kondo {:mvn/version "2019.07.31-alpha"}}
+              :extra-deps {clj-kondo/clj-kondo {:mvn/version "2019.07.31-alpha"}}
               :jvm-opts   ["-Dclojure.main.report=stderr"]}
              :test
              {:extra-paths ["test"]
@@ -33,6 +33,6 @@
                               "--report-unsupported-elements-at-runtime"
                               "-H:Name=dictionary-validator"]
               :jvm-opts      ["-Dclojure.compiler.direct-linking=true"]
-              :extra-deps    {clj.native-image
+              :extra-deps    {clj.native-image/clj.native-image
                               {:git/url "https://github.com/taylorwood/clj.native-image.git"
                                :sha     "7708e7fd4572459c81f6a6b8e44c96f41cdd92d4"}}}}}
