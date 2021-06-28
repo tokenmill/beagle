@@ -140,8 +140,11 @@
        synonyms))
 
 (defn dict-entry->terms [dict-entry default-analysis-conf]
-  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
-    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
+  (log/info dict-entry)
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)
+        char-filter (when (some? (:filtered-chars dict-entry))
+                      (text-analysis/char-filter (:filtered-chars dict-entry)))]
+    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer char-filter))))
 
 (defn merge-dict-entry-with-highlighter-opts
   "There are dictionary opts that do not contribute to text analysis, but contributes
