@@ -140,7 +140,6 @@
        synonyms))
 
 (defn dict-entry->terms [dict-entry default-analysis-conf]
-  (log/info dict-entry)
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)
         char-filter (when (some? (:filtered-chars dict-entry))
                       (text-analysis/char-filter (:filtered-chars dict-entry)))]
