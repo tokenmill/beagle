@@ -6,7 +6,8 @@
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis]
             [beagle.monitor :as monitor]
-            [beagle.schema :refer [->Highlight ->DictionaryEntry]])
+            [beagle.schema :refer [->Highlight ->DictionaryEntry]]
+            [clojure.string :as str])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions Term)
@@ -140,10 +141,8 @@
        synonyms))
 
 (defn dict-entry->terms [dict-entry default-analysis-conf]
-  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)
-        char-filter (when (some? (:filtered-chars dict-entry))
-                      (text-analysis/char-filter (:filtered-chars dict-entry)))]
-    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer char-filter))))
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
+    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
 (defn merge-dict-entry-with-highlighter-opts
   "There are dictionary opts that do not contribute to text analysis, but contributes
@@ -228,8 +227,6 @@
           (meta-type? annotation) (update-in [:meta] dissoc "_type")))
 
 (defn match [text monitor field-names type-name opts]
-  (log/infof "Text: %s" text)
-  (log/infof "Opts: %s" (pr-str opts))
   (if (s/blank? text)
     []
     (let [annotations (map post-process (annotate-text text monitor field-names type-name))]

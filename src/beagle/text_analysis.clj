@@ -4,8 +4,7 @@
   (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenStream)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
-           (org.apache.lucene.analysis.charfilter MappingCharFilter NormalizeCharMap NormalizeCharMap$Builder)
-           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
+           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer ClassicTokenizer)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.analysis.snowball SnowballFilter)
            (org.tartarus.snowball.ext LithuanianStemmer ArabicStemmer ArmenianStemmer BasqueStemmer EnglishStemmer CatalanStemmer DanishStemmer DutchStemmer EstonianStemmer FinnishStemmer FrenchStemmer German2Stemmer GermanStemmer HungarianStemmer IrishStemmer ItalianStemmer KpStemmer LovinsStemmer NorwegianStemmer PorterStemmer PortugueseStemmer RomanianStemmer RussianStemmer SpanishStemmer SwedishStemmer TurkishStemmer)
@@ -52,6 +51,7 @@
   (case tokenizer-kw
     :keyword (KeywordTokenizer.)
     :letter (LetterTokenizer.)
+    :classic (ClassicTokenizer.)
     :standard (StandardTokenizer.)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
@@ -93,15 +93,8 @@
       (str "text" "." tokenizr "." (string/join "-" (sort filters)))
       (str "text" "." tokenizr))))
 
-(defn ^NormalizeCharMap char-filter-constructor [chars]
-  (let [builder (NormalizeCharMap$Builder.)]
-    (doseq [c chars]
-      (.add builder (str c) " "))
-    (.build builder)))
-
 (def analyzer (memoize analyzer-constructor))
 (def field-name (memoize field-name-constructor))
-(def char-filter (memoize char-filter-constructor))
 
 (def default-conf
   {:tokenizer       :standard
@@ -140,16 +133,14 @@
 
 (defn text->token-strings
   "Given a text and an analyzer returns a list of tokens as strings."
-  ([^String text ^Analyzer analyzer] (text->token-strings text analyzer nil))
-  ([^String text ^Analyzer analyzer ^NormalizeCharMap char-filter]
-   (let [rdr (cond->> (StringReader. text) (some? char-filter) (MappingCharFilter. char-filter))
-         ^TokenStream token-stream (.tokenStream analyzer "not-important" rdr)
-         ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
-     (.reset token-stream)
-     (reduce (fn [acc _]
-               (if (.incrementToken token-stream)
-                 (conj acc (.toString termAtt))
-                 (do
-                   (.end token-stream)
-                   (.close token-stream)
-                   (reduced acc)))) [] (range)))))
+  [^String text ^Analyzer analyzer]
+  (let [^TokenStream token-stream (.tokenStream analyzer "not-important" (StringReader. text))
+        ^CharTermAttribute termAtt (.addAttribute token-stream CharTermAttribute)]
+    (.reset token-stream)
+    (reduce (fn [acc _]
+              (if (.incrementToken token-stream)
+                (conj acc (log/spyf "Token: %s" (.toString termAtt)))
+                (do
+                  (.end token-stream)
+                  (.close token-stream)
+                  (reduced acc)))) [] (range))))
