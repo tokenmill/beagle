@@ -139,7 +139,7 @@
     (.reset token-stream)
     (reduce (fn [acc _]
               (if (.incrementToken token-stream)
-                (conj acc (log/spyf "Token: %s" (.toString termAtt)))
+                (conj acc (.toString termAtt))
                 (do
                   (.end token-stream)
                   (.close token-stream)
