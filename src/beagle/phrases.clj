@@ -228,6 +228,8 @@
           (meta-type? annotation) (update-in [:meta] dissoc "_type")))
 
 (defn match [text monitor field-names type-name opts]
+  (log/infof "Text: %s" text)
+  (log/infof "Opts: %s" (pr-str opts))
   (if (s/blank? text)
     []
     (let [annotations (map post-process (annotate-text text monitor field-names type-name))]
