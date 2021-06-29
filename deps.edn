@@ -1,16 +1,16 @@
-{:deps      {org.clojure/clojure              {:mvn/version "1.10.1"}
-             org.clojure/data.csv             {:mvn/version "0.1.4"}
-             org.clojure/tools.logging        {:mvn/version "0.5.0"}
-             org.apache.lucene/lucene-core    {:mvn/version "8.2.0"}
-             org.apache.lucene/lucene-monitor {:mvn/version "8.2.0"}
-             metosin/jsonista                 {:mvn/version "0.2.4"}}
+{:deps      {org.clojure/clojure              {:mvn/version "1.10.3"}
+             org.clojure/data.csv             {:mvn/version "1.0.0"}
+             org.clojure/tools.logging        {:mvn/version "1.1.0"}
+             org.apache.lucene/lucene-core    {:mvn/version "8.9.0"}
+             org.apache.lucene/lucene-monitor {:mvn/version "8.9.0"}
+             metosin/jsonista                 {:mvn/version "0.3.3"}}
  :paths     ["src" "classes"]
  :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
              "clojars" {:url "https://repo.clojars.org/"}}
  :aliases   {:dev
-             {:extra-deps  {org.jsoup/jsoup                {:mvn/version "1.11.3"}
-                            org.clojure/test.check         {:mvn/version "0.9.0"}
-                            criterium/criterium            {:mvn/version "0.4.5"}
+             {:extra-deps  {org.jsoup/jsoup                {:mvn/version "1.13.1"}
+                            org.clojure/test.check         {:mvn/version "1.0.0"}
+                            criterium/criterium            {:mvn/version "0.4.6"}
                             ch.qos.logback/logback-classic {:mvn/version "1.2.3"}}
               :extra-paths ["test/resources"]}
              :clj-kondo
@@ -20,9 +20,9 @@
              :test
              {:extra-paths ["test"]
               :extra-deps  {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                                                       :sha     "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}
-                            org.jsoup/jsoup           {:mvn/version "1.11.3"}
-                            org.clojure/test.check    {:mvn/version "0.9.0"}}}
+                                                       :sha     "62ef1de18e076903374306060ac0e8a752e57c86"}
+                            org.jsoup/jsoup           {:mvn/version "1.13.1"}
+                            org.clojure/test.check    {:mvn/version "1.0.0"}}}
              :runner
              {:extra-paths ["test"]
               :main-opts   ["-m" "cognitect.test-runner"]}

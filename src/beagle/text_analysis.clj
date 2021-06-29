@@ -4,7 +4,7 @@
   (:import (org.apache.lucene.analysis Analyzer Analyzer$TokenStreamComponents Tokenizer TokenStream)
            (org.apache.lucene.analysis.core LowerCaseFilter WhitespaceTokenizer LetterTokenizer KeywordTokenizer UnicodeWhitespaceTokenizer)
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
-           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer)
+           (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer ClassicTokenizer)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
            (org.apache.lucene.analysis.snowball SnowballFilter)
            (org.tartarus.snowball.ext LithuanianStemmer ArabicStemmer ArmenianStemmer BasqueStemmer EnglishStemmer CatalanStemmer DanishStemmer DutchStemmer EstonianStemmer FinnishStemmer FrenchStemmer German2Stemmer GermanStemmer HungarianStemmer IrishStemmer ItalianStemmer KpStemmer LovinsStemmer NorwegianStemmer PorterStemmer PortugueseStemmer RomanianStemmer RussianStemmer SpanishStemmer SwedishStemmer TurkishStemmer)
@@ -51,6 +51,7 @@
   (case tokenizer-kw
     :keyword (KeywordTokenizer.)
     :letter (LetterTokenizer.)
+    :classic (ClassicTokenizer.)
     :standard (StandardTokenizer.)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
