@@ -247,7 +247,7 @@
   - optimize-dictionary?
       if set to true then optimizes dictionary before creating the monitor, default false
   - tokenizer
-      a keyword one of #{:keyword :letter :standard :unicode-whitespace :whitespace}, default :standard
+      a keyword one of #{:keyword :letter :standard :classic :unicode-whitespace :whitespace}, default :standard
   - case-sensitive?
       if set to true text matching is case sensitive, default true
   - ascii-fold?
