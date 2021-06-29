@@ -142,9 +142,8 @@
 
 (defn dict-entry->terms [dict-entry default-analysis-conf]
   (println dict-entry)
-  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)
-        char-filter (when (= :strict (:tokenizer dict-entry)) (text-analysis/char-filter))]
-    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer char-filter))))
+  (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
+    (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
 (defn merge-dict-entry-with-highlighter-opts
   "There are dictionary opts that do not contribute to text analysis, but contributes
