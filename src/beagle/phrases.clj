@@ -6,8 +6,7 @@
             [beagle.dictionary-optimizer :as optimizer]
             [beagle.text-analysis :as text-analysis]
             [beagle.monitor :as monitor]
-            [beagle.schema :refer [->Highlight ->DictionaryEntry]]
-            [clojure.string :as str])
+            [beagle.schema :refer [->Highlight ->DictionaryEntry]])
   (:import (java.util UUID)
            (org.apache.lucene.document Document FieldType Field)
            (org.apache.lucene.index IndexOptions Term)
@@ -141,7 +140,6 @@
        synonyms))
 
 (defn dict-entry->terms [dict-entry default-analysis-conf]
-  (println dict-entry)
   (let [analyzer (text-analysis/get-string-analyzer dict-entry default-analysis-conf)]
     (into-array String (text-analysis/text->token-strings (:text dict-entry) analyzer))))
 
