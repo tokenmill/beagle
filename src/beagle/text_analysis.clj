@@ -53,7 +53,6 @@
     :letter (LetterTokenizer.)
     :classic (ClassicTokenizer.)
     :standard (StandardTokenizer.)
-    :strict (WhitespaceTokenizer.)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
     (do
