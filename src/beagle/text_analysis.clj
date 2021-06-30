@@ -54,7 +54,7 @@
     :letter (LetterTokenizer.)
     :classic (ClassicTokenizer.)
     :standard (StandardTokenizer.)
-    :strict (PatternTokenizer. #"[\x00-\x1F\x7F\s~!^&*\-_:;\"'?/.,]" -1)
+    :strict (PatternTokenizer. #"[\x00-\x1F\x7F\s~!^&*\-_:;\"?/.,]" -1)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
     (do
