@@ -6,6 +6,7 @@
            (org.apache.lucene.analysis.miscellaneous ASCIIFoldingFilter)
            (org.apache.lucene.analysis.standard ClassicFilter StandardTokenizer ClassicTokenizer)
            (org.apache.lucene.analysis.tokenattributes CharTermAttribute)
+           (org.apache.lucene.analysis.pattern PatternTokenizer)
            (org.apache.lucene.analysis.snowball SnowballFilter)
            (org.tartarus.snowball.ext LithuanianStemmer ArabicStemmer ArmenianStemmer BasqueStemmer EnglishStemmer CatalanStemmer DanishStemmer DutchStemmer EstonianStemmer FinnishStemmer FrenchStemmer German2Stemmer GermanStemmer HungarianStemmer IrishStemmer ItalianStemmer KpStemmer LovinsStemmer NorwegianStemmer PorterStemmer PortugueseStemmer RomanianStemmer RussianStemmer SpanishStemmer SwedishStemmer TurkishStemmer)
            (org.tartarus.snowball SnowballProgram)
@@ -53,6 +54,7 @@
     :letter (LetterTokenizer.)
     :classic (ClassicTokenizer.)
     :standard (StandardTokenizer.)
+    :strict (PatternTokenizer. #"[^a-zA-Z0-9{}\[\]()<>#+=@&']+" -1)
     :unicode-whitespace (UnicodeWhitespaceTokenizer.)
     :whitespace (WhitespaceTokenizer.)
     (do
